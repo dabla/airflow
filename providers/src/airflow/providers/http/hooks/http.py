@@ -25,13 +25,12 @@ import aiohttp
 import requests
 import tenacity
 from aiohttp import ClientResponseError
+from airflow.exceptions import AirflowException
+from airflow.hooks.base import BaseHook
 from asgiref.sync import sync_to_async
 from requests.auth import HTTPBasicAuth
 from requests.models import DEFAULT_REDIRECT_LIMIT
 from requests_toolbelt.adapters.socket_options import TCPKeepAliveAdapter
-
-from airflow.exceptions import AirflowException
-from airflow.hooks.base import BaseHook
 
 if TYPE_CHECKING:
     from aiohttp.client_reqrep import ClientResponse
@@ -49,8 +48,8 @@ def _url_from_endpoint(base_url: str | None, endpoint: str | None) -> str:
 
 def _process_extra_options_from_connection(conn: Connection, extra_options: dict[str, Any]) -> dict:
     extra = conn.extra_dejson
-    extra.pop("stream", None)
-    extra.pop("cert", None)
+    stream = extra.pop("stream", None)
+    cert = extra.pop("cert", None)
     proxies = extra.pop("proxies", extra.pop("proxy", None))
     timeout = extra.pop("timeout", None)
     verify_ssl = extra.pop("verify", extra.pop("verify_ssl", None))
@@ -59,6 +58,10 @@ def _process_extra_options_from_connection(conn: Connection, extra_options: dict
     trust_env = extra.pop("trust_env", None)
     check_response = extra.pop("check_response", None)
 
+    if stream is not None and "stream" not in extra_options:
+        extra_options["stream"] = stream
+    if cert is not None and "cert" not in extra_options:
+        extra_options["cert"] = cert
     if proxies is not None and "proxy" not in extra_options:
         extra_options["proxy"] = proxies
     if timeout is not None and "timeout" not in extra_options:
@@ -138,7 +141,9 @@ class HttpHook(BaseHook):
 
     # headers may be passed through directly or in the "extra" field in the connection
     # definition
-    def get_conn(self, headers: dict[Any, Any] | None = None, extra_options: dict[str, Any] | None = None) -> requests.Session:
+    def get_conn(
+        self, headers: dict[Any, Any] | None = None, extra_options: dict[str, Any] | None = None
+    ) -> requests.Session:
         """
         Create a Requests HTTP session.
 
@@ -189,9 +194,17 @@ class HttpHook(BaseHook):
     def _configure_session_from_extra(
         self, session: requests.Session, connection: Connection, extra_options: dict[str, Any] | None = None
     ) -> requests.Session:
-        extra = _process_extra_options_from_connection(connection, extra_options)
+        if extra_options is None:
+            extra_options = {}
+        headers = _process_extra_options_from_connection(connection, extra_options)
+        session.proxies = extra_options.pop("proxies", extra_options.pop("proxy", {}))
+        session.stream = extra_options.pop("stream", False)
+        session.verify = extra_options.pop("verify", extra_options.pop("verify_ssl", True))
+        session.cert = extra_options.pop("cert", None)
+        session.max_redirects = extra_options.pop("max_redirects", DEFAULT_REDIRECT_LIMIT)
+        session.trust_env = extra_options.pop("trust_env", True)
         try:
-            session.headers.update(extra)
+            session.headers.update(headers)
         except TypeError:
             self.log.warning("Connection to %s has invalid extra field.", connection.host)
         return session

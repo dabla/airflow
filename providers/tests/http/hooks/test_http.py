@@ -35,7 +35,7 @@ from requests.models import DEFAULT_REDIRECT_LIMIT
 
 from airflow.exceptions import AirflowException
 from airflow.models import Connection
-from airflow.providers.http.hooks.http import HttpAsyncHook, HttpHook
+from airflow.providers.http.hooks.http import HttpAsyncHook, HttpHook, _process_extra_options_from_connection
 
 
 @pytest.fixture
@@ -118,7 +118,9 @@ class TestHttpHook:
             resp = self.get_hook.run("v1/test", extra_options={"check_response": False})
             assert resp.text == '{"status":{"status": 404}}'
 
-    def test_get_request_do_not_raise_for_status_if_check_response_is_false_in_connection(self, requests_mock):
+    def test_get_request_do_not_raise_for_status_if_check_response_is_false_in_connection(
+        self, requests_mock
+    ):
         airflow_connection = get_airflow_connection_with_extra(extra={"check_response": False})
         requests_mock.get(
             "http://test:8080/v1/test",
@@ -186,7 +188,9 @@ class TestHttpHook:
             assert conn.trust_env is True
 
     def test_hook_ignore_cert_from_extra_field_as_header(self):
-        airflow_connection = get_airflow_connection_with_extra(extra={"bearer": "test", "cert": "cert.crt"})
+        airflow_connection = get_airflow_connection_with_extra(
+            extra={"bearer": "test", "cert": "cert.crt", "stream": True}
+        )
         with mock.patch("airflow.hooks.base.BaseHook.get_connection", side_effect=airflow_connection):
             expected_conn = airflow_connection()
             conn = self.get_hook.get_conn()
@@ -194,7 +198,7 @@ class TestHttpHook:
             assert conn.headers.get("bearer") == "test"
             assert conn.headers.get("cert") is None
             assert conn.proxies == {}
-            assert conn.stream is False
+            assert conn.stream is True
             assert conn.verify is True
             assert conn.cert == "cert.crt"
             assert conn.max_redirects == DEFAULT_REDIRECT_LIMIT
@@ -563,6 +567,37 @@ class TestHttpHook:
                 session.adapters["https://"], type(custom_adapter)
             ), "Custom HTTPS adapter not correctly mounted"
 
+    def test_process_extra_options_from_connection(self):
+        extra_options = {}
+        proxy = {"http": "http://proxy:80", "https": "https://proxy:80"}
+        conn = get_airflow_connection_with_extra(
+            extra={
+                "bearer": "test",
+                "stream": True,
+                "cert": "cert.crt",
+                "proxies": proxy,
+                "timeout": 60,
+                "verify": False,
+                "allow_redirects": False,
+                "max_redirects": 3,
+                "trust_env": False,
+            }
+        )()
+
+        actual = _process_extra_options_from_connection(conn=conn, extra_options=extra_options)
+
+        assert extra_options == {
+            "cert": "cert.crt",
+            "stream": True,
+            "proxy": proxy,
+            "timeout": 60,
+            "verify_ssl": False,
+            "allow_redirects": False,
+            "max_redirects": 3,
+            "trust_env": False,
+        }
+        assert actual == {"bearer": "test"}
+
 
 class TestHttpAsyncHook:
     @pytest.mark.asyncio
@@ -695,35 +730,6 @@ class TestHttpAsyncHook:
                 assert mocked_function.call_args.kwargs.get("allow_redirects") is False
                 assert mocked_function.call_args.kwargs.get("max_redirects") == 3
                 assert mocked_function.call_args.kwargs.get("trust_env") is False
-
-    def test_process_extra_options_from_connection(self):
-        extra_options = {}
-        proxy = {"http": "http://proxy:80", "https": "https://proxy:80"}
-        conn = get_airflow_connection_with_extra(
-            extra={
-                "bearer": "test",
-                "stream": True,
-                "cert": "cert.crt",
-                "proxies": proxy,
-                "timeout": 60,
-                "verify": False,
-                "allow_redirects": False,
-                "max_redirects": 3,
-                "trust_env": False,
-            }
-        )()
-
-        actual = HttpAsyncHook._process_extra_options_from_connection(conn=conn, extra_options=extra_options)
-
-        assert extra_options == {
-            "proxy": proxy,
-            "timeout": 60,
-            "verify_ssl": False,
-            "allow_redirects": False,
-            "max_redirects": 3,
-            "trust_env": False,
-        }
-        assert actual == {"bearer": "test"}
 
     @pytest.mark.asyncio
     async def test_build_request_url_from_connection(self):
