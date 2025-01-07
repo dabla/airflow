@@ -118,6 +118,19 @@ class TestHttpHook:
             resp = self.get_hook.run("v1/test", extra_options={"check_response": False})
             assert resp.text == '{"status":{"status": 404}}'
 
+    def test_get_request_do_not_raise_for_status_if_check_response_is_false_in_connection(self, requests_mock):
+        airflow_connection = get_airflow_connection_with_extra(extra={"check_response": False})
+        requests_mock.get(
+            "http://test:8080/v1/test",
+            status_code=404,
+            text='{"status":{"status": 404}}',
+            reason="Bad request",
+        )
+
+        with mock.patch("airflow.hooks.base.BaseHook.get_connection", side_effect=airflow_connection):
+            resp = self.get_hook.run("v1/test")
+            assert resp.text == '{"status":{"status": 404}}'
+
     def test_hook_contains_header_from_extra_field(self):
         with mock.patch("airflow.hooks.base.BaseHook.get_connection", side_effect=get_airflow_connection):
             expected_conn = get_airflow_connection()

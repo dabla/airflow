@@ -47,6 +47,35 @@ def _url_from_endpoint(base_url: str | None, endpoint: str | None) -> str:
     return (base_url or "") + (endpoint or "")
 
 
+def _process_extra_options_from_connection(conn: Connection, extra_options: dict[str, Any]) -> dict:
+    extra = conn.extra_dejson
+    extra.pop("stream", None)
+    extra.pop("cert", None)
+    proxies = extra.pop("proxies", extra.pop("proxy", None))
+    timeout = extra.pop("timeout", None)
+    verify_ssl = extra.pop("verify", extra.pop("verify_ssl", None))
+    allow_redirects = extra.pop("allow_redirects", None)
+    max_redirects = extra.pop("max_redirects", None)
+    trust_env = extra.pop("trust_env", None)
+    check_response = extra.pop("check_response", None)
+
+    if proxies is not None and "proxy" not in extra_options:
+        extra_options["proxy"] = proxies
+    if timeout is not None and "timeout" not in extra_options:
+        extra_options["timeout"] = timeout
+    if verify_ssl is not None and "verify_ssl" not in extra_options:
+        extra_options["verify_ssl"] = verify_ssl
+    if allow_redirects is not None and "allow_redirects" not in extra_options:
+        extra_options["allow_redirects"] = allow_redirects
+    if max_redirects is not None and "max_redirects" not in extra_options:
+        extra_options["max_redirects"] = max_redirects
+    if trust_env is not None and "trust_env" not in extra_options:
+        extra_options["trust_env"] = trust_env
+    if check_response is not None and "check_response" not in extra_options:
+        extra_options["check_response"] = check_response
+    return extra
+
+
 class HttpHook(BaseHook):
     """
     Interact with HTTP servers.
@@ -109,11 +138,14 @@ class HttpHook(BaseHook):
 
     # headers may be passed through directly or in the "extra" field in the connection
     # definition
-    def get_conn(self, headers: dict[Any, Any] | None = None) -> requests.Session:
+    def get_conn(self, headers: dict[Any, Any] | None = None, extra_options: dict[str, Any] | None = None) -> requests.Session:
         """
         Create a Requests HTTP session.
 
         :param headers: Additional headers to be passed through as a dictionary.
+        :param extra_options: additional options to be used when executing the request
+            i.e. {'check_response': False} to avoid checking raising exceptions on non
+            2XX or 3XX status codes
         :return: A configured requests.Session object.
         """
         session = requests.Session()
@@ -121,7 +153,7 @@ class HttpHook(BaseHook):
         self._set_base_url(connection)
         session = self._configure_session_from_auth(session, connection)
         if connection.extra:
-            session = self._configure_session_from_extra(session, connection)
+            session = self._configure_session_from_extra(session, connection, extra_options)
         session = self._configure_session_from_mount_adapters(session)
         if headers:
             session.headers.update(headers)
@@ -155,17 +187,9 @@ class HttpHook(BaseHook):
         return None
 
     def _configure_session_from_extra(
-        self, session: requests.Session, connection: Connection
+        self, session: requests.Session, connection: Connection, extra_options: dict[str, Any] | None = None
     ) -> requests.Session:
-        extra = connection.extra_dejson
-        extra.pop("timeout", None)
-        extra.pop("allow_redirects", None)
-        session.proxies = extra.pop("proxies", extra.pop("proxy", {}))
-        session.stream = extra.pop("stream", False)
-        session.verify = extra.pop("verify", extra.pop("verify_ssl", True))
-        session.cert = extra.pop("cert", None)
-        session.max_redirects = extra.pop("max_redirects", DEFAULT_REDIRECT_LIMIT)
-        session.trust_env = extra.pop("trust_env", True)
+        extra = _process_extra_options_from_connection(connection, extra_options)
         try:
             session.headers.update(extra)
         except TypeError:
@@ -207,7 +231,7 @@ class HttpHook(BaseHook):
         """
         extra_options = extra_options or {}
 
-        session = self.get_conn(headers)
+        session = self.get_conn(headers, extra_options)
 
         url = self.url_from_endpoint(endpoint)
 
@@ -399,7 +423,7 @@ class HttpAsyncHook(BaseHook):
             if conn.login:
                 auth = self.auth_type(conn.login, conn.password)
             if conn.extra:
-                extra = self._process_extra_options_from_connection(conn=conn, extra_options=extra_options)
+                extra = _process_extra_options_from_connection(conn=conn, extra_options=extra_options)
 
                 try:
                     _headers.update(extra)
@@ -458,32 +482,6 @@ class HttpAsyncHook(BaseHook):
                     return response
             else:
                 raise NotImplementedError  # should not reach this, but makes mypy happy
-
-    @classmethod
-    def _process_extra_options_from_connection(cls, conn: Connection, extra_options: dict) -> dict:
-        extra = conn.extra_dejson
-        extra.pop("stream", None)
-        extra.pop("cert", None)
-        proxies = extra.pop("proxies", extra.pop("proxy", None))
-        timeout = extra.pop("timeout", None)
-        verify_ssl = extra.pop("verify", extra.pop("verify_ssl", None))
-        allow_redirects = extra.pop("allow_redirects", None)
-        max_redirects = extra.pop("max_redirects", None)
-        trust_env = extra.pop("trust_env", None)
-
-        if proxies is not None and "proxy" not in extra_options:
-            extra_options["proxy"] = proxies
-        if timeout is not None and "timeout" not in extra_options:
-            extra_options["timeout"] = timeout
-        if verify_ssl is not None and "verify_ssl" not in extra_options:
-            extra_options["verify_ssl"] = verify_ssl
-        if allow_redirects is not None and "allow_redirects" not in extra_options:
-            extra_options["allow_redirects"] = allow_redirects
-        if max_redirects is not None and "max_redirects" not in extra_options:
-            extra_options["max_redirects"] = max_redirects
-        if trust_env is not None and "trust_env" not in extra_options:
-            extra_options["trust_env"] = trust_env
-        return extra
 
     def _retryable_error_async(self, exception: ClientResponseError) -> bool:
         """
