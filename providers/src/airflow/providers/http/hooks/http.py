@@ -22,16 +22,16 @@ from typing import TYPE_CHECKING, Any, Callable
 from urllib.parse import urlparse
 
 import aiohttp
-import requests
 import tenacity
 from aiohttp import ClientResponseError
-from asgiref.sync import sync_to_async
-from requests.auth import HTTPBasicAuth
-from requests.models import DEFAULT_REDIRECT_LIMIT
-from requests_toolbelt.adapters.socket_options import TCPKeepAliveAdapter
-
 from airflow.exceptions import AirflowException
 from airflow.hooks.base import BaseHook
+from asgiref.sync import sync_to_async
+from requests import PreparedRequest, Request, Response, Session
+from requests.auth import HTTPBasicAuth
+from requests.exceptions import HTTPError, ConnectionError
+from requests.models import DEFAULT_REDIRECT_LIMIT
+from requests_toolbelt.adapters.socket_options import TCPKeepAliveAdapter
 
 if TYPE_CHECKING:
     from aiohttp.client_reqrep import ClientResponse
@@ -144,17 +144,15 @@ class HttpHook(BaseHook):
     # definition
     def get_conn(
         self, headers: dict[Any, Any] | None = None, extra_options: dict[str, Any] | None = None
-    ) -> requests.Session:
+    ) -> Session:
         """
         Create a Requests HTTP session.
 
         :param headers: Additional headers to be passed through as a dictionary.
         :param extra_options: additional options to be used when executing the request
-            i.e. {'check_response': False} to avoid checking raising exceptions on non
-            2XX or 3XX status codes
         :return: A configured requests.Session object.
         """
-        session = requests.Session()
+        session = Session()
         connection = self.get_connection(self.http_conn_id)
         self._set_base_url(connection)
         session = self._configure_session_from_auth(session, connection)
@@ -180,8 +178,8 @@ class HttpHook(BaseHook):
             raise ValueError(f"Invalid base URL: Missing scheme in {self.base_url}")
 
     def _configure_session_from_auth(
-        self, session: requests.Session, connection: Connection
-    ) -> requests.Session:
+        self, session: Session, connection: Connection
+    ) -> Session:
         session.auth = self._extract_auth(connection)
         return session
 
@@ -193,8 +191,8 @@ class HttpHook(BaseHook):
         return None
 
     def _configure_session_from_extra(
-        self, session: requests.Session, connection: Connection, extra_options: dict[str, Any] | None = None
-    ) -> requests.Session:
+        self, session: Session, connection: Connection, extra_options: dict[str, Any] | None = None
+    ) -> Session:
         if extra_options is None:
             extra_options = {}
         headers = _process_extra_options_from_connection(connection, extra_options)
@@ -210,7 +208,7 @@ class HttpHook(BaseHook):
             self.log.warning("Connection to %s has invalid extra field.", connection.host)
         return session
 
-    def _configure_session_from_mount_adapters(self, session: requests.Session) -> requests.Session:
+    def _configure_session_from_mount_adapters(self, session: Session) -> Session:
         scheme = urlparse(self.base_url).scheme
         if not scheme:
             raise ValueError(
@@ -251,19 +249,19 @@ class HttpHook(BaseHook):
 
         if self.method == "GET":
             # GET uses params
-            req = requests.Request(self.method, url, params=data, headers=headers, **request_kwargs)
+            req = Request(self.method, url, params=data, headers=headers, **request_kwargs)
         elif self.method == "HEAD":
             # HEAD doesn't use params
-            req = requests.Request(self.method, url, headers=headers, **request_kwargs)
+            req = Request(self.method, url, headers=headers, **request_kwargs)
         else:
             # Others use data
-            req = requests.Request(self.method, url, data=data, headers=headers, **request_kwargs)
+            req = Request(self.method, url, data=data, headers=headers, **request_kwargs)
 
         prepped_request = session.prepare_request(req)
         self.log.debug("Sending '%s' to url: %s", self.method, url)
         return self.run_and_check(session, prepped_request, extra_options)
 
-    def check_response(self, response: requests.Response) -> None:
+    def check_response(self, response: Response) -> None:
         """
         Check the status code and raise on failure.
 
@@ -273,15 +271,15 @@ class HttpHook(BaseHook):
         """
         try:
             response.raise_for_status()
-        except requests.exceptions.HTTPError:
+        except HTTPError:
             self.log.error("HTTP error: %s", response.reason)
             self.log.error(response.text)
             raise AirflowException(str(response.status_code) + ":" + response.reason)
 
     def run_and_check(
         self,
-        session: requests.Session,
-        prepped_request: requests.PreparedRequest,
+        session: Session,
+        prepped_request: PreparedRequest,
         extra_options: dict[Any, Any],
     ) -> Any:
         """
@@ -317,7 +315,7 @@ class HttpHook(BaseHook):
                 self.check_response(response)
             return response
 
-        except requests.exceptions.ConnectionError as ex:
+        except ConnectionError as ex:
             self.log.warning("%s Tenacity will retry to execute the operation", ex)
             raise ex
 
