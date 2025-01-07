@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import json
+from typing import Any
 
 import requests
 from requests import Session
@@ -86,13 +87,17 @@ class DingdingHook(HttpHook):
             data = {"msgtype": self.message_type, self.message_type: self.message}
         return json.dumps(data)
 
-    def get_conn(self, headers: dict | None = None) -> Session:
+    def get_conn(
+        self, headers: dict[Any, Any] | None = None, extra_options: dict[str, Any] | None = None
+    ) -> Session:
         """
         Overwrite HttpHook get_conn.
 
         We just need base_url and headers, and not don't need generic params.
 
-        :param headers: additional headers to be passed through as a dictionary
+        :param headers: Additional headers to be passed through as a dictionary.
+        :param extra_options: additional options to be used when executing the request
+        :return: A configured requests.Session object.
         """
         conn = self.get_connection(self.http_conn_id)
         self.base_url = conn.host if conn.host else "https://oapi.dingtalk.com"
