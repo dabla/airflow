@@ -163,8 +163,11 @@ class HttpHook(BaseHook):
             session.headers.update(headers)
         return session
 
+    def default_host(self) -> str:
+        return ""
+
     def _set_base_url(self, connection: Connection) -> None:
-        host = connection.host or ""
+        host = connection.host or self.default_host()
         schema = connection.schema or "http"
         # RFC 3986 (https://www.rfc-editor.org/rfc/rfc3986.html#page-16)
         if "://" in host:
