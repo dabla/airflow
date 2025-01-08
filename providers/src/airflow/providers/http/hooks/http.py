@@ -102,6 +102,8 @@ class HttpHook(BaseHook):
     default_conn_name = "http_default"
     conn_type = "http"
     hook_name = "HTTP"
+    default_host = ""
+    default_headers = {}
 
     def __init__(
         self,
@@ -159,15 +161,14 @@ class HttpHook(BaseHook):
         if connection.extra:
             session = self._configure_session_from_extra(session, connection, extra_options)
         session = self._configure_session_from_mount_adapters(session)
+        if self.default_headers:
+            session.headers.update(self.default_headers)
         if headers:
             session.headers.update(headers)
         return session
 
-    def default_host(self) -> str:
-        return ""
-
     def _set_base_url(self, connection: Connection) -> None:
-        host = connection.host or self.default_host()
+        host = connection.host or self.default_host
         schema = connection.schema or "http"
         # RFC 3986 (https://www.rfc-editor.org/rfc/rfc3986.html#page-16)
         if "://" in host:

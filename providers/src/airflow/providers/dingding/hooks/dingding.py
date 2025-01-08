@@ -48,6 +48,7 @@ class DingdingHook(HttpHook):
     default_conn_name = "dingding_default"
     conn_type = "dingding"
     hook_name = "DingTalk Custom Robot (Dingding)"
+    default_host = "https://oapi.dingtalk.com"
 
     def __init__(
         self,
@@ -86,9 +87,6 @@ class DingdingHook(HttpHook):
         else:
             data = {"msgtype": self.message_type, self.message_type: self.message}
         return json.dumps(data)
-
-    def default_host(self) -> str:
-        return "https://oapi.dingtalk.com"
 
     def send(self) -> None:
         """Send DingTalk Custom Robot message."""
