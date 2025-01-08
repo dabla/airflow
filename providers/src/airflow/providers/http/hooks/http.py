@@ -24,14 +24,15 @@ from urllib.parse import urlparse
 import aiohttp
 import tenacity
 from aiohttp import ClientResponseError
-from airflow.exceptions import AirflowException
-from airflow.hooks.base import BaseHook
 from asgiref.sync import sync_to_async
 from requests import PreparedRequest, Request, Response, Session
 from requests.auth import HTTPBasicAuth
-from requests.exceptions import HTTPError, ConnectionError
+from requests.exceptions import ConnectionError, HTTPError
 from requests.models import DEFAULT_REDIRECT_LIMIT
 from requests_toolbelt.adapters.socket_options import TCPKeepAliveAdapter
+
+from airflow.exceptions import AirflowException
+from airflow.hooks.base import BaseHook
 
 if TYPE_CHECKING:
     from aiohttp.client_reqrep import ClientResponse
@@ -181,9 +182,7 @@ class HttpHook(BaseHook):
         if not parsed.scheme:
             raise ValueError(f"Invalid base URL: Missing scheme in {self.base_url}")
 
-    def _configure_session_from_auth(
-        self, session: Session, connection: Connection
-    ) -> Session:
+    def _configure_session_from_auth(self, session: Session, connection: Connection) -> Session:
         session.auth = self._extract_auth(connection)
         return session
 

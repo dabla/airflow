@@ -91,7 +91,10 @@ class TestHttpHook:
         from requests.exceptions import MissingSchema
 
         requests_mock.get(
-            "http://test.com:1234/some/endpoint", status_code=200, text='{"status":{"status": 200}}', reason="OK"
+            "http://test.com:1234/some/endpoint",
+            status_code=200,
+            text='{"status":{"status": 200}}',
+            reason="OK",
         )
 
         with mock.patch(

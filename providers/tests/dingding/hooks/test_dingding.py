@@ -21,6 +21,7 @@ import json
 from unittest.mock import patch
 
 import pytest
+
 from airflow.models import Connection
 from airflow.providers.dingding.hooks.dingding import DingdingHook
 
@@ -35,7 +36,10 @@ class TestDingdingHook:
     conn_id = "dingding_conn_id_test"
 
     def test_get_conn(self):
-        with patch("airflow.hooks.base.BaseHook.get_connection", side_effect=lambda conn_id: get_airflow_connection(conn_id=conn_id, host=None)):
+        with patch(
+            "airflow.hooks.base.BaseHook.get_connection",
+            side_effect=lambda conn_id: get_airflow_connection(conn_id=conn_id, host=None),
+        ):
             hook = DingdingHook(dingding_conn_id=self.conn_id)
             assert hook.base_url == ""
             hook.get_conn(headers={})

@@ -18,10 +18,6 @@
 from __future__ import annotations
 
 import json
-from typing import Any
-
-import requests
-from requests import Session
 
 from airflow.exceptions import AirflowException
 from airflow.providers.http.hooks.http import HttpHook
