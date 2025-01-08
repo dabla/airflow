@@ -104,7 +104,7 @@ class HttpHook(BaseHook):
     conn_type = "http"
     hook_name = "HTTP"
     default_host = ""
-    default_headers = {}
+    default_headers: dict[str, str] = {}
 
     def __init__(
         self,
