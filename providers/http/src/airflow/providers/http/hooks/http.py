@@ -421,6 +421,7 @@ class HttpAsyncHook(BaseHook):
         # headers may be passed through directly or in the "extra" field in the connection
         # definition
         _headers = {}
+        extra = {}
         auth = None
 
         if self.http_conn_id:
@@ -475,7 +476,7 @@ class HttpAsyncHook(BaseHook):
                 json=json,
                 headers=_headers,
                 auth=auth,
-                **extra_options,
+                **extra,
             )
             try:
                 response.raise_for_status()
