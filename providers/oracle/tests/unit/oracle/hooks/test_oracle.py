@@ -20,7 +20,6 @@ from __future__ import annotations
 import json
 from datetime import datetime
 from unittest import mock
-from unittest.mock import MagicMock
 
 import numpy as np
 import oracledb
@@ -28,12 +27,7 @@ import pytest
 
 from airflow.models import Connection
 from airflow.providers.oracle.hooks.oracle import OracleHook
-
-
-def mock_oracle_lob(value):
-    mock_lob = MagicMock(spec=oracledb.LOB)
-    mock_lob.read.return_value = value
-    return mock_lob
+from unit.oracle.test_utils import mock_oracle_lob
 
 
 class TestOracleHookConn:
