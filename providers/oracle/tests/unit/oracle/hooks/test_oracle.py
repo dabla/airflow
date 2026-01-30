@@ -27,6 +27,7 @@ import pytest
 
 from airflow.models import Connection
 from airflow.providers.oracle.hooks.oracle import OracleHook
+
 from unit.oracle.test_utils import mock_oracle_lob
 
 
