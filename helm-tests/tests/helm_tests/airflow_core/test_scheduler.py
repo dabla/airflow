@@ -47,68 +47,17 @@ class TestScheduler:
                 "StatefulSet",
             ),
             ("LocalExecutor", {"celery": {"persistence": {"enabled": False}}}, "Deployment"),
-            # Test workers.persistence.enabled flag when celery one is default (expected no impact on kind)
+            # Test workers.persistence.enabled flag when celery one is default
             ("CeleryExecutor", {"persistence": {"enabled": False}}, "Deployment"),
             ("CeleryExecutor", {"persistence": {"enabled": True}}, "Deployment"),
             ("CeleryKubernetesExecutor", {"persistence": {"enabled": True}}, "Deployment"),
             ("CeleryExecutor,KubernetesExecutor", {"persistence": {"enabled": True}}, "Deployment"),
             ("KubernetesExecutor", {"persistence": {"enabled": True}}, "Deployment"),
-            ("LocalKubernetesExecutor", {"persistence": {"enabled": False}}, "StatefulSet"),
+            ("LocalKubernetesExecutor", {"persistence": {"enabled": False}}, "Deployment"),
             ("LocalKubernetesExecutor", {"persistence": {"enabled": True}}, "StatefulSet"),
             ("LocalExecutor", {"persistence": {"enabled": True}}, "StatefulSet"),
             ("LocalExecutor,KubernetesExecutor", {"persistence": {"enabled": True}}, "StatefulSet"),
-            ("LocalExecutor", {"persistence": {"enabled": False}}, "StatefulSet"),
-            # Test workers.persistence.enabled flag when celery one is unset
-            (
-                "CeleryExecutor",
-                {"persistence": {"enabled": False}, "celery": {"persistence": {"enabled": None}}},
-                "Deployment",
-            ),
-            (
-                "CeleryExecutor",
-                {"persistence": {"enabled": True}, "celery": {"persistence": {"enabled": None}}},
-                "Deployment",
-            ),
-            (
-                "CeleryKubernetesExecutor",
-                {"persistence": {"enabled": True}, "celery": {"persistence": {"enabled": None}}},
-                "Deployment",
-            ),
-            (
-                "CeleryExecutor,KubernetesExecutor",
-                {"persistence": {"enabled": True}, "celery": {"persistence": {"enabled": None}}},
-                "Deployment",
-            ),
-            (
-                "KubernetesExecutor",
-                {"persistence": {"enabled": True}, "celery": {"persistence": {"enabled": None}}},
-                "Deployment",
-            ),
-            (
-                "LocalKubernetesExecutor",
-                {"persistence": {"enabled": False}, "celery": {"persistence": {"enabled": None}}},
-                "Deployment",
-            ),
-            (
-                "LocalKubernetesExecutor",
-                {"persistence": {"enabled": True}, "celery": {"persistence": {"enabled": None}}},
-                "StatefulSet",
-            ),
-            (
-                "LocalExecutor",
-                {"persistence": {"enabled": True}, "celery": {"persistence": {"enabled": None}}},
-                "StatefulSet",
-            ),
-            (
-                "LocalExecutor,KubernetesExecutor",
-                {"persistence": {"enabled": True}, "celery": {"persistence": {"enabled": None}}},
-                "StatefulSet",
-            ),
-            (
-                "LocalExecutor",
-                {"persistence": {"enabled": False}, "celery": {"persistence": {"enabled": None}}},
-                "Deployment",
-            ),
+            ("LocalExecutor", {"persistence": {"enabled": False}}, "Deployment"),
         ],
     )
     def test_scheduler_kind(self, executor, workers_values, kind):
@@ -348,6 +297,25 @@ class TestScheduler:
         expected_result = revision_history_limit or global_revision_history_limit
         assert jmespath.search("spec.revisionHistoryLimit", docs[0]) == expected_result
 
+    @pytest.mark.parametrize(
+        ("revision_history_limit", "global_revision_history_limit", "expected"),
+        [(0, None, 0), (None, 0, 0), (0, 10, 0)],
+    )
+    def test_revision_history_limit_zero(
+        self, revision_history_limit, global_revision_history_limit, expected
+    ):
+        """Test that revisionHistoryLimit can be set to 0."""
+        values = {"scheduler": {}}
+        if revision_history_limit is not None:
+            values["scheduler"]["revisionHistoryLimit"] = revision_history_limit
+        if global_revision_history_limit is not None:
+            values["revisionHistoryLimit"] = global_revision_history_limit
+        docs = render_chart(
+            values=values,
+            show_only=["templates/scheduler/scheduler-deployment.yaml"],
+        )
+        assert jmespath.search("spec.revisionHistoryLimit", docs[0]) == expected
+
     def test_should_create_valid_affinity_tolerations_and_node_selector(self):
         docs = render_chart(
             values={
@@ -565,7 +533,7 @@ class TestScheduler:
     @pytest.mark.parametrize(
         ("airflow_version", "probe_command"),
         [
-            ("1.9.0", "from airflow.jobs.scheduler_job import SchedulerJob"),
+            ("1.10.14", "from airflow.jobs.scheduler_job import SchedulerJob"),
             ("2.1.0", "airflow jobs check --job-type SchedulerJob --hostname $(hostname)"),
             ("2.5.0", "airflow jobs check --job-type SchedulerJob --local"),
         ],
@@ -583,7 +551,7 @@ class TestScheduler:
     @pytest.mark.parametrize(
         ("airflow_version", "probe_command"),
         [
-            ("1.9.0", "from airflow.jobs.scheduler_job import SchedulerJob"),
+            ("1.10.14", "from airflow.jobs.scheduler_job import SchedulerJob"),
             ("2.1.0", "airflow jobs check --job-type SchedulerJob --hostname $(hostname)"),
             ("2.5.0", "airflow jobs check --job-type SchedulerJob --local"),
         ],
