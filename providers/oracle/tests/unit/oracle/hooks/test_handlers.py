@@ -41,9 +41,9 @@ class TestHandlers:
     def test_fetch_one_handler(self):
         cursor = MagicMock()
         cursor.description = [("col1", "int")]
-        cursor.fetchone.return_value = mock_oracle_lob("hello")
+        cursor.fetchone.return_value = (mock_oracle_lob("hello"),)
 
-        assert fetch_one_handler(cursor) == ("hello")
+        assert fetch_one_handler(cursor) == ("hello",)
 
         cursor.description = None
         assert fetch_one_handler(cursor) is None
