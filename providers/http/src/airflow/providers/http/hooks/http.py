@@ -18,9 +18,9 @@
 from __future__ import annotations
 
 import copy
-from collections.abc import Awaitable, Callable
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, Any, cast, AsyncGenerator
+from typing import TYPE_CHECKING, Any, cast
 from urllib.parse import urlparse
 
 import aiohttp
@@ -35,7 +35,7 @@ from requests_toolbelt.adapters.socket_options import TCPKeepAliveAdapter
 from tenacity import retry_if_exception
 
 from airflow.providers.common.compat.sdk import AirflowException, BaseHook
-from airflow.providers.http.exceptions import HttpErrorException, HttpMethodException
+from airflow.providers.http.exceptions import HttpMethodException
 from airflow.utils.log.logging_mixin import LoggingMixin
 
 if TYPE_CHECKING:
@@ -643,7 +643,11 @@ class HttpAsyncHook(BaseHook):
         if session is not None:
             request = self._get_request_func(session=session)
             config = await self.config()
-            return await AsyncHttpSession(hook=self, request=request, config=config).run(endpoint=endpoint, data=data, json=json, headers=headers, extra_options=extra_options)
+            return await AsyncHttpSession(hook=self, request=request, config=config).run(
+                endpoint=endpoint, data=data, json=json, headers=headers, extra_options=extra_options
+            )
 
         async with self.session() as http:
-            return await http.run(endpoint=endpoint, data=data, json=json, headers=headers, extra_options=extra_options)
+            return await http.run(
+                endpoint=endpoint, data=data, json=json, headers=headers, extra_options=extra_options
+            )
