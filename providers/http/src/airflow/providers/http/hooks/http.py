@@ -32,6 +32,7 @@ from requests.auth import HTTPBasicAuth
 from requests.exceptions import ConnectionError, HTTPError
 from requests.models import DEFAULT_REDIRECT_LIMIT
 from requests_toolbelt.adapters.socket_options import TCPKeepAliveAdapter
+from tenacity import retry_if_exception
 
 from airflow.providers.common.compat.sdk import AirflowException, BaseHook
 from airflow.providers.http.exceptions import HttpErrorException, HttpMethodException
@@ -95,6 +96,26 @@ def _process_extra_options_from_connection(
         passed_extra_options["check_response"] = check_response
 
     return conn_extra_options, passed_extra_options
+
+
+def _retryable_error_async(exception: ClientResponseError) -> bool:
+    """
+    Determine whether an exception may successful on a subsequent attempt.
+
+    It considers the following to be retryable:
+        - requests_exceptions.ConnectionError
+        - requests_exceptions.Timeout
+        - anything with a status code >= 500
+
+    Most retryable errors are covered by status code >= 500.
+    """
+    if exception.status == 429:
+        # don't retry for too Many Requests
+        return False
+    if exception.status == 413:
+        # don't retry for payload Too Large
+        return False
+    return exception.status >= 500
 
 
 class HttpHook(BaseHook):
@@ -440,7 +461,7 @@ class AsyncHttpSession(LoggingMixin):
         return self._hook.retry_delay
 
     @property
-    def headers(self) -> dict[str, Any]:
+    def headers(self) -> dict[str, Any] | None:
         return self.config.headers
 
     @property
@@ -488,32 +509,13 @@ class AsyncHttpSession(LoggingMixin):
         async for attempt in AsyncRetrying(
             stop=stop_after_attempt(self.retry_limit),
             wait=wait_fixed(self.retry_delay),
+            retry=retry_if_exception(_retryable_error_async),
             reraise=True,
         ):
             with attempt:
                 return await request_func()
 
         raise NotImplementedError  # should not reach this, but makes mypy happy
-
-    @classmethod
-    def _retryable_error_async(cls, exception: ClientResponseError) -> bool:
-        """
-        Determine whether an exception may successful on a subsequent attempt.
-
-        It considers the following to be retryable:
-            - requests_exceptions.ConnectionError
-            - requests_exceptions.Timeout
-            - anything with a status code >= 500
-
-        Most retryable errors are covered by status code >= 500.
-        """
-        if exception.status == 429:
-            # don't retry for too Many Requests
-            return False
-        if exception.status == 413:
-            # don't retry for payload Too Large
-            return False
-        return exception.status >= 500
 
 
 class HttpAsyncHook(BaseHook):
