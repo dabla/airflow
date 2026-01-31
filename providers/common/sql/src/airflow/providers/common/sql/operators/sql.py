@@ -1343,7 +1343,7 @@ class SQLInsertRowsOperator(BaseSQLOperator):
         columns: Iterable[str] | None = None,
         ignored_columns: Iterable[str] | None = None,
         rows: list[Any] | XComArg | None = None,
-        rows_processor: Callable[[Any, Context], Any] = lambda rows, **context: rows,
+        rows_processor: Callable[[Any, Context], Any] | None = None,
         preoperator: str | list[str] | None = None,
         postoperator: str | list[str] | None = None,
         hook_params: dict | None = None,
@@ -1395,8 +1395,18 @@ class SQLInsertRowsOperator(BaseSQLOperator):
             return [column for column in self.columns if column not in self.ignored_columns]
         return self.columns
 
-    def _process_rows(self, context: Context):
-        return self._rows_processor(self.rows, **context)  # type: ignore
+    def _insert_rows(self, rows: list[Any], context: Context):
+        if self._rows_processor:
+            rows = self._rows_processor(rows, **context)  # type: ignore
+
+        self.log.info("Inserting %d rows into %s", len(rows), self.conn_id)
+
+        self.get_db_hook().insert_rows(
+            table=self.table_name_with_schema,
+            rows=rows,
+            target_fields=self.column_names,
+            **self.insert_args,
+        )
 
     def execute(self, context: Context) -> Any:
         if not self.rows:
@@ -1408,13 +1418,7 @@ class SQLInsertRowsOperator(BaseSQLOperator):
             self.log.debug("Running preoperator")
             self.log.debug(self.preoperator)
             self.get_db_hook().run(self.preoperator)
-        rows = self._process_rows(context=context)
-        self.get_db_hook().insert_rows(
-            table=self.table_name_with_schema,
-            rows=rows,
-            target_fields=self.column_names,
-            **self.insert_args,
-        )
+        self._insert_rows(rows=self.rows, context=context)
         if self.postoperator:
             self.log.debug("Running postoperator")
             self.log.debug(self.postoperator)
