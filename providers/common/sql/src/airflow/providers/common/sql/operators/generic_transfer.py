@@ -81,7 +81,7 @@ class GenericTransfer(BaseOperator):
         source_hook_params: dict | None = None,
         destination_conn_id: str,
         destination_hook_params: dict | None = None,
-        rows_processor: Callable[[Any, Context], Any] = lambda rows, **context: rows,
+        rows_processor: Callable[[Any, Context], Any] | None = None,
         preoperator: str | list[str] | None = None,
         insert_args: dict | None = None,
         page_size: int | None = None,
@@ -142,11 +142,9 @@ class GenericTransfer(BaseOperator):
         if isinstance(commit_every, str):
             self.insert_args["commit_every"] = int(commit_every)
 
-    def _process_rows(self, rows: list[Any], context: Context):
-        return self._rows_processor(rows, **context)  # type: ignore
-
     def _insert_rows(self, rows: list[Any], context: Context):
-        rows = self._process_rows(rows=rows, context=context)
+        if self._rows_processor:
+            rows = self._rows_processor(rows, **context)  # type: ignore
 
         self.log.info("Inserting %d rows into %s", len(rows), self.destination_conn_id)
 
@@ -205,7 +203,6 @@ class GenericTransfer(BaseOperator):
                 self.log.info("Offset increased to %d", offset)
                 context["ti"].xcom_push(key="offset", value=offset)
 
-                rows = self._process_rows(rows=rows, context=context)
                 self._insert_rows(rows=rows, context=context)
 
                 self.defer(
