@@ -79,7 +79,7 @@ class SQLExecuteQueryTrigger(BaseTrigger):
             )
         return hook
 
-    async def get_records(self) -> Any:
+    async def _get_records(self) -> Any:
         from asgiref.sync import sync_to_async
 
         hook = self.get_hook()
@@ -95,7 +95,7 @@ class SQLExecuteQueryTrigger(BaseTrigger):
             self.log.info("Executing: \n %s", self.sql)
             self.log.info("Reading records from %s", self.conn_id)
 
-            results = await self.get_records()
+            results = await self._get_records()
 
             self.log.info("Reading records from %s done!", self.conn_id)
             self.log.debug("results: %s", results)
