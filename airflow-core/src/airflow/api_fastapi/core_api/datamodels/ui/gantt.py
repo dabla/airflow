@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -15,19 +14,30 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-set -euxo pipefail
 
-cd "$( dirname "${BASH_SOURCE[0]}" )/../../"
+from __future__ import annotations
 
-PYTHON_ARG=""
+from datetime import datetime
 
-PIP_VERSION="26.0"
-if [[ ${PYTHON_VERSION=} != "" ]]; then
-    PYTHON_ARG="--python=$(which python"${PYTHON_VERSION}") "
-fi
+from airflow.api_fastapi.core_api.base import BaseModel
+from airflow.utils.state import TaskInstanceState
 
-python -m pip install --upgrade "pip==${PIP_VERSION}"
-uv tool uninstall apache-airflow-breeze >/dev/null 2>&1 || true
-# shellcheck disable=SC2086
-uv tool install ${PYTHON_ARG} --force --editable ./dev/breeze/
-echo '/home/runner/.local/bin' >> "${GITHUB_PATH}"
+
+class GanttTaskInstance(BaseModel):
+    """Task instance data for Gantt chart."""
+
+    task_id: str
+    try_number: int
+    state: TaskInstanceState | None
+    start_date: datetime | None
+    end_date: datetime | None
+    is_group: bool = False
+    is_mapped: bool = False
+
+
+class GanttResponse(BaseModel):
+    """Response for Gantt chart endpoint."""
+
+    dag_id: str
+    run_id: str
+    task_instances: list[GanttTaskInstance]
