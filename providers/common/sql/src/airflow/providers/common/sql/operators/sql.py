@@ -1395,7 +1395,7 @@ class SQLInsertRowsOperator(BaseSQLOperator):
             return [column for column in self.columns if column not in self.ignored_columns]
         return self.columns
 
-    def _insert_rows(self, rows: list[Any], context: Context):
+    def _insert_rows(self, rows: list[Any] | XComArg, context: Context):
         if self._rows_processor:
             rows = self._rows_processor(rows, **context)  # type: ignore
 
