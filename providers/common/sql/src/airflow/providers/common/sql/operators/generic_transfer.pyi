@@ -64,7 +64,7 @@ class GenericTransfer(BaseOperator):
         source_hook_params: dict | None = None,
         destination_conn_id: str,
         destination_hook_params: dict | None = None,
-        rows_processor: Callable[[Any, Context], Any] = lambda rows, **context: rows,
+        rows_processor: Callable[[Any, Context], Any] | None = None,
         preoperator: str | list[str] | None = None,
         insert_args: dict | None = None,
         page_size: int | None = None,
