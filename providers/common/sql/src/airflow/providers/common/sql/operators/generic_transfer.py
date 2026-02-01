@@ -47,7 +47,9 @@ class GenericTransfer(BaseOperator):
     :param source_hook_params: source hook parameters.
     :param destination_conn_id: destination connection. (templated)
     :param destination_hook_params: destination hook parameters.
-    :param rows_processor: (optional) a function that will be applied to the rows before inserting them into the table.
+    :param rows_processor: (optional) A callable applied once per batch of rows before insertion.
+        It receives the full list of rows and the task context, and must return a list of rows compatible with
+        the underlying hook's.
     :param preoperator: sql statement or list of statements to be
         executed prior to loading the data. (templated)
     :param insert_args: extra params for `insert_rows` method.
