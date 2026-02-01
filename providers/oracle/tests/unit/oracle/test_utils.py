@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -15,19 +14,15 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-set -euxo pipefail
 
-cd "$( dirname "${BASH_SOURCE[0]}" )/../../"
+from __future__ import annotations
 
-PYTHON_ARG=""
+from unittest.mock import MagicMock
 
-PIP_VERSION="26.0"
-if [[ ${PYTHON_VERSION=} != "" ]]; then
-    PYTHON_ARG="--python=$(which python"${PYTHON_VERSION}") "
-fi
+import oracledb
 
-python -m pip install --upgrade "pip==${PIP_VERSION}"
-uv tool uninstall apache-airflow-breeze >/dev/null 2>&1 || true
-# shellcheck disable=SC2086
-uv tool install ${PYTHON_ARG} --force --editable ./dev/breeze/
-echo '/home/runner/.local/bin' >> "${GITHUB_PATH}"
+
+def mock_oracle_lob(value):
+    mock_lob = MagicMock(spec=oracledb.LOB)
+    mock_lob.read.return_value = value
+    return mock_lob
