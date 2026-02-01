@@ -81,7 +81,7 @@ class GenericTransfer(BaseOperator):
         source_hook_params: dict | None = None,
         destination_conn_id: str,
         destination_hook_params: dict | None = None,
-        rows_processor: Callable[[Any, Context], Any] | None = None,
+        rows_processor: Callable[[list[Any], Context], list[Any]] | None = None,
         preoperator: str | list[str] | None = None,
         insert_args: dict | None = None,
         page_size: int | None = None,
@@ -144,7 +144,7 @@ class GenericTransfer(BaseOperator):
 
     def _insert_rows(self, rows: list[Any], context: Context):
         if self._rows_processor:
-            rows = self._rows_processor(rows, **context)  # type: ignore
+            rows = self._rows_processor(rows, **context)
 
         self.log.info("Inserting %d rows into %s", len(rows), self.destination_conn_id)
 
