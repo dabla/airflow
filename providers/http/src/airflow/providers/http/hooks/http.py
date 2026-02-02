@@ -492,7 +492,7 @@ class AsyncHttpSession(LoggingMixin):
 
         extra_options = extra_options or {}
         url = _url_from_endpoint(self.base_url, endpoint)
-        merged_headers = {**self.headers, **(headers or {})}
+        merged_headers = {**(self.headers or {}), **(headers or {})}
 
         async def request_func() -> ClientResponse:
             response = await self._request(
