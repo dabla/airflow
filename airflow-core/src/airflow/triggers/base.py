@@ -96,7 +96,7 @@ class BaseTrigger(abc.ABC, Templater, LoggingMixin):
         return None
 
     @property
-    def task_instance(self) -> TaskInstance | None:
+    def task_instance(self) -> TaskInstance:
         return self._task_instance
 
     @task_instance.setter
