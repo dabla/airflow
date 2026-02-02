@@ -529,6 +529,8 @@ class HttpAsyncHook(BaseHook):
         API url i.e https://www.google.com/ and optional authentication credentials. Default
         headers can also be specified in the Extra field in json format.
     :param auth_type: The auth type for the service
+    :param retry_limit: Maximum number of times to retry this job if it fails  (default is 3)
+    :param retry_delay: Delay between retry attempts (default is 1.0)
     """
 
     conn_name_attr = "http_conn_id"
