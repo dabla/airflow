@@ -103,9 +103,9 @@ def _retryable_error_async(exception: BaseException) -> bool:
     Determine whether an exception may successful on a subsequent attempt.
 
     It considers the following to be retryable:
-        - requests_exceptions.ConnectionError
-        - requests_exceptions.Timeout
-        - anything with a status code >= 500
+    - requests_exceptions.ConnectionError
+    - requests_exceptions.Timeout
+    - anything with a status code >= 500
 
     Most retryable errors are covered by status code >= 500.
     """
