@@ -34,7 +34,6 @@ from requests.models import DEFAULT_REDIRECT_LIMIT
 from requests_toolbelt.adapters.socket_options import TCPKeepAliveAdapter
 from tenacity import retry_if_exception
 
-from airflow.providers.common.compat.connection import get_async_connection
 from airflow.providers.common.compat.sdk import AirflowException, BaseHook
 from airflow.providers.http.exceptions import HttpMethodException
 from airflow.utils.log.logging_mixin import LoggingMixin
