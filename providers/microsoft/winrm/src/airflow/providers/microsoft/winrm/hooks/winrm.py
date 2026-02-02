@@ -22,7 +22,7 @@ from __future__ import annotations
 import logging
 from base64 import b64encode
 from contextlib import suppress
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 from winrm.exceptions import WinRMOperationTimeoutError
 from winrm.protocol import Protocol
@@ -198,20 +198,26 @@ class WinRMHook(BaseHook):
         try:
             winrm_protocol = Protocol(
                 endpoint=self.endpoint,
-                transport=self.transport,  # type: ignore
+                transport=cast(
+                    Literal[
+                        "auto", "basic", "certificate", "ntlm",
+                        "kerberos", "credssp", "plaintext", "ssl"
+                    ],
+                    self.transport,
+                ),
                 username=self.username,
                 password=self.password,
                 service=self.service,
-                keytab=self.keytab,  # type: ignore
-                ca_trust_path=self.ca_trust_path,  # type: ignore
+                keytab=cast(Any, self.keytab),
+                ca_trust_path=cast(str | Literal["legacy_requests"], self.ca_trust_path),
                 cert_pem=self.cert_pem,
                 cert_key_pem=self.cert_key_pem,
-                server_cert_validation=self.server_cert_validation,  # type: ignore
+                server_cert_validation=cast(Literal["validate", "ignore"] | None, self.server_cert_validation),
                 kerberos_delegation=self.kerberos_delegation,
                 read_timeout_sec=self.read_timeout_sec,
                 operation_timeout_sec=self.operation_timeout_sec,
                 kerberos_hostname_override=self.kerberos_hostname_override,
-                message_encryption=self.message_encryption,  # type: ignore
+                message_encryption=cast(Literal["auto", "always", "never"], self.message_encryption),
                 credssp_disable_tlsv1_2=self.credssp_disable_tlsv1_2,
                 send_cbt=self.send_cbt,
             )
