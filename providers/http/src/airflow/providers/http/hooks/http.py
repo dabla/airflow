@@ -425,12 +425,27 @@ class HttpHook(BaseHook):
 
 
 class SessionConfig(BaseModel):
+    """Configuration container for an asynchronous HTTP session."""
+
     base_url: str
     headers: dict[str, Any] | None = None
     auth: aiohttp.BasicAuth | None = None
 
 
 class AsyncHttpSession(LoggingMixin):
+    """
+    Wrapper around an ``aiohttp.ClientSession`` providing a session bound HttpAsyncHook.
+
+    This class binds an asynchronous HTTP client session to an ``HttpAsyncHook`` and applies connection
+    configuration, authentication, headers, and retry logic consistently across requests. A single
+    ``AsyncHttpSession`` instance is intended to be used for multiple HTTP calls within the same logical session.
+
+    :param hook: The ``HttpAsyncHook`` instance that owns this session and provides connection-level behavior
+        such as retries and logging.
+    :param request: A callable used to perform the underlying HTTP request. This is typically a bound
+        ``aiohttp.ClientSession`` request method.
+    :param config: Resolved session configuration containing base URL, headers, and authentication settings.
+    """
     def __init__(
         self,
         hook: HttpAsyncHook,
@@ -615,6 +630,7 @@ class HttpAsyncHook(BaseHook):
     async def session(self) -> AsyncGenerator[AsyncHttpSession, None]:
         """
         Create an AsyncHttpSession bound to a single aiohttp.ClientSession.
+
         Airflow connection resolution happens exactly once here.
         """
         async with aiohttp.ClientSession() as session:
