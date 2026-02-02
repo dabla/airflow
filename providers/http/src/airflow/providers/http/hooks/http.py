@@ -424,12 +424,13 @@ class HttpHook(BaseHook):
             return False, str(e)
 
 
-class AsyncHttpSession(LoggingMixin):
-    class SessionConfig(BaseModel):
-        base_url: str
-        headers: dict[str, Any] | None = None
-        auth: aiohttp.BasicAuth | None = None
+class SessionConfig(BaseModel):
+    base_url: str
+    headers: dict[str, Any] | None = None
+    auth: aiohttp.BasicAuth | None = None
 
+
+class AsyncHttpSession(LoggingMixin):
     def __init__(
         self,
         hook: HttpAsyncHook,
@@ -552,7 +553,7 @@ class HttpAsyncHook(BaseHook):
             raise ValueError("Retry limit must be greater or equal to 1")
         self.retry_limit = retry_limit
         self.retry_delay = retry_delay
-        self._config: AsyncHttpSession.SessionConfig | None = None
+        self._config: SessionConfig | None = None
 
     def _get_request_func(self, session: aiohttp.ClientSession) -> Callable[..., Any]:
         method = self.method
@@ -572,7 +573,7 @@ class HttpAsyncHook(BaseHook):
             return session.options
         raise HttpMethodException(f"Unexpected HTTP Method: {method}")
 
-    async def config(self) -> AsyncHttpSession.SessionConfig:
+    async def config(self) -> SessionConfig:
         if not self._config:
             from airflow.providers.common.compat.connection import get_async_connection
 
@@ -601,7 +602,7 @@ class HttpAsyncHook(BaseHook):
                     )
                     headers.update(conn_extra_options)
 
-            self._config = AsyncHttpSession.SessionConfig(
+            self._config = SessionConfig(
                 base_url=base_url,
                 headers=headers,
                 auth=auth,
