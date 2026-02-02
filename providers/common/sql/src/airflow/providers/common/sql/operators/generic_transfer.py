@@ -83,7 +83,7 @@ class GenericTransfer(BaseOperator):
         source_hook_params: dict | None = None,
         destination_conn_id: str,
         destination_hook_params: dict | None = None,
-        rows_processor: Callable[[list[Any], Context], list[Any]] | None = None,
+        rows_processor: Callable[[list[Any], Any], list[Any]] | None = None,
         preoperator: str | list[str] | None = None,
         insert_args: dict | None = None,
         page_size: int | None = None,
