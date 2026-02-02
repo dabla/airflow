@@ -640,7 +640,6 @@ class HttpAsyncHook(BaseHook):
             For example, ``run(json=obj)`` is passed as
             ``aiohttp.ClientSession().get(json=obj)``.
         """
-
         if session is not None:
             request = self._get_request_func(session=session)
             config = await self.config()
