@@ -16,23 +16,16 @@
 # under the License.
 from __future__ import annotations
 
-import asyncio
 import json
 import re
 from collections.abc import Sequence
 from enum import Enum
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-import aiohttp
 import requests
-from aiohttp import ClientResponseError
 
-from airflow.providers.common.compat.connection import get_async_connection
 from airflow.providers.common.compat.sdk import AirflowException
-from airflow.providers.http.hooks.http import HttpAsyncHook, HttpHook, _retryable_error_async
-
-if TYPE_CHECKING:
-    from airflow.models import Connection
+from airflow.providers.http.hooks.http import HttpAsyncHook, HttpHook
 
 
 class BatchState(Enum):
