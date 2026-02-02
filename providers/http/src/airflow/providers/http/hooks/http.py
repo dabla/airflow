@@ -99,7 +99,7 @@ def _process_extra_options_from_connection(
     return conn_extra_options, passed_extra_options
 
 
-def _retryable_error_async(exception: ClientResponseError) -> bool:
+def _retryable_error_async(exception: BaseException) -> bool:
     """
     Determine whether an exception may successful on a subsequent attempt.
 
@@ -110,6 +110,8 @@ def _retryable_error_async(exception: ClientResponseError) -> bool:
 
     Most retryable errors are covered by status code >= 500.
     """
+    if not isinstance(exception, ClientResponseError):
+        return False
     if exception.status == 429:
         # don't retry for too Many Requests
         return False
