@@ -1369,16 +1369,6 @@ class SQLInsertRowsOperator(BaseSQLOperator):
         self.insert_args = insert_args or {}
         self.do_xcom_push = False
 
-    def render_template_fields(
-        self,
-        context: Context,
-        jinja_env: jinja2.Environment | None = None,
-    ) -> None:
-        super().render_template_fields(context=context, jinja_env=jinja_env)
-
-        if isinstance(self.rows, XComArg):
-            self.rows = self.rows.resolve(context=context)
-
     @property
     def table_name_with_schema(self) -> str:
         if self.schema is not None:
@@ -1397,7 +1387,9 @@ class SQLInsertRowsOperator(BaseSQLOperator):
             return [column for column in self.columns if column not in self.ignored_columns]
         return self.columns
 
-    def _insert_rows(self, rows: list[Any], context: Context):
+    def _insert_rows(self, context: Context):
+        rows = self.rows.resolve(context=context) if isinstance(self.rows, XComArg) else self.rows
+
         if self._rows_processor:
             rows = self._rows_processor(rows, **context)
 
@@ -1420,7 +1412,7 @@ class SQLInsertRowsOperator(BaseSQLOperator):
             self.log.debug("Running preoperator")
             self.log.debug(self.preoperator)
             self.get_db_hook().run(self.preoperator)
-        self._insert_rows(rows=self.rows, context=context)
+        self._insert_rows(context=context)
         if self.postoperator:
             self.log.debug("Running postoperator")
             self.log.debug(self.postoperator)
