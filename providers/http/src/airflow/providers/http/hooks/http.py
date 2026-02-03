@@ -514,7 +514,7 @@ class AsyncHttpSession(LoggingMixin):
             response = await self._request(
                 url,
                 params=data if self.method == "GET" else None,
-                data=data if self.method in ("POST", "PUT", "PATCH") else None,
+                data=data if self.method in {"POST", "PUT", "PATCH"} else None,
                 json=json,
                 headers=merged_headers,
                 auth=self.auth,
@@ -530,7 +530,16 @@ class AsyncHttpSession(LoggingMixin):
             reraise=True,
         ):
             with attempt:
-                return await request_func()
+                try:
+                    return await request_func()
+                except ClientResponseError as e:
+                    self.log.warning(
+                        "[Try %d of %d] Request to %s failed.",
+                        attempt.retry_state.attempt_number,
+                        self.retry_limit,
+                        url,
+                    )
+                    raise e
 
         raise NotImplementedError  # should not reach this, but makes mypy happy
 
