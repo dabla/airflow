@@ -639,7 +639,7 @@ class HttpAsyncHook(BaseHook):
     @asynccontextmanager
     async def session(self) -> AsyncGenerator[AsyncHttpSession, None]:
         """
-        Create an AsyncHttpSession bound to a single aiohttp.ClientSession.
+        Create an AsyncHttpSession bound to a single ``aiohttp.ClientSession``.
 
         Airflow connection resolution happens exactly once here.
         """
