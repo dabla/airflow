@@ -523,15 +523,16 @@ class LivyAsyncHook(HttpAsyncHook):
         )
 
         try:
-            response = await self.run(
-                endpoint=endpoint,
-                data=data,
-                headers={**self._def_headers, **self.extra_headers, **(headers or {})},
-                extra_options=self.extra_options,
-            )
+            async with self.session() as session:
+                response = await session.run(
+                    endpoint=endpoint,
+                    data=data,
+                    headers={**self._def_headers, **self.extra_headers, **(headers or {})},
+                    extra_options=self.extra_options,
+                )
 
-            result = await response.json()
-            return {"status": "success", "response": result}
+                result = await response.json()
+                return {"status": "success", "response": result}
         except ClientResponseError as e:
             return {"Response": {e.message}, "Status Code": {e.status}, "status": "error"}
 
