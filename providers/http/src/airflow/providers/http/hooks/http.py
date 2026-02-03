@@ -446,6 +446,7 @@ class AsyncHttpSession(LoggingMixin):
         ``aiohttp.ClientSession`` request method.
     :param config: Resolved session configuration containing base URL, headers, and authentication settings.
     """
+
     def __init__(
         self,
         hook: HttpAsyncHook,
