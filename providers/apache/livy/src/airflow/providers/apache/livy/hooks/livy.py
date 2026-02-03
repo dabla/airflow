@@ -23,6 +23,7 @@ from enum import Enum
 from typing import Any
 
 import requests
+from aiohttp import ClientResponseError
 
 from airflow.providers.common.compat.sdk import AirflowException
 from airflow.providers.http.hooks.http import HttpAsyncHook, HttpHook
@@ -498,7 +499,7 @@ class LivyAsyncHook(HttpAsyncHook):
     async def run_method(
         self,
         endpoint: str,
-        method: str = "GET",
+        method: str | None = None,
         data: Any | None = None,
         headers: dict[str, Any] | None = None,
     ) -> Any:
@@ -511,18 +512,18 @@ class LivyAsyncHook(HttpAsyncHook):
         :param headers: headers
         :return: http response
         """
-        if method not in ("GET", "POST", "PUT", "DELETE", "HEAD"):
+
+        method = method or self.method
+        if method not in {"GET", "PATCH", "POST", "PUT", "DELETE", "HEAD"}:
             return {"status": "error", "response": f"Invalid http method {method}"}
 
-        back_method = self.method
-        self.method = method
-        try:
-            endpoint = (
-                f"{self.endpoint_prefix}/{endpoint}"
-                if self.endpoint_prefix and endpoint
-                else endpoint or self.endpoint_prefix
-            )
+        endpoint = (
+            f"{self.endpoint_prefix}/{endpoint}"
+            if self.endpoint_prefix and endpoint
+            else endpoint or self.endpoint_prefix
+        )
 
+        try:
             response = await self.run(
                 endpoint=endpoint,
                 data=data,
@@ -531,9 +532,9 @@ class LivyAsyncHook(HttpAsyncHook):
             )
 
             result = await response.json()
-        finally:
-            self.method = back_method
-        return {"status": "success", "response": result}
+            return {"status": "success", "response": result}
+        except ClientResponseError as e:
+            return {"Response": {e.message}, "Status Code": {e.status}, "status": "error"}
 
     async def get_batch_state(self, session_id: int | str) -> Any:
         """
