@@ -435,7 +435,7 @@ class SessionConfig(BaseModel):
 
 class AsyncHttpSession(LoggingMixin):
     """
-    Wrapper around an ``aiohttp.ClientSession`` providing a session bound HttpAsyncHook.
+    Wrapper around an ``aiohttp.ClientSession`` providing a session bound ``HttpAsyncHook``.
 
     This class binds an asynchronous HTTP client session to an ``HttpAsyncHook`` and applies connection
     configuration, authentication, headers, and retry logic consistently across requests. A single
@@ -646,7 +646,7 @@ class HttpAsyncHook(BaseHook):
     @asynccontextmanager
     async def session(self) -> AsyncGenerator[AsyncHttpSession, None]:
         """
-        Create an AsyncHttpSession bound to a single ``aiohttp.ClientSession``.
+        Create an ``AsyncHttpSession`` bound to a single ``aiohttp.ClientSession``.
 
         Airflow connection resolution happens exactly once here.
         """
@@ -667,7 +667,7 @@ class HttpAsyncHook(BaseHook):
         """
         Perform an asynchronous HTTP request call.
 
-        :param session: aiohttp.ClientSession
+        :param session: ``aiohttp.ClientSession``
         :param endpoint: Endpoint to be called, i.e. ``resource/v1/query?``.
         :param data: Payload to be uploaded or request parameters.
         :param json: Payload to be uploaded as JSON.
