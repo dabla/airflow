@@ -35,7 +35,7 @@ from requests_toolbelt.adapters.socket_options import TCPKeepAliveAdapter
 from tenacity import retry_if_exception
 
 from airflow.providers.common.compat.sdk import AirflowException, BaseHook
-from airflow.providers.http.exceptions import HttpMethodException
+from airflow.providers.http.exceptions import HttpMethodException, HttpErrorException
 from airflow.utils.log.logging_mixin import LoggingMixin
 
 if TYPE_CHECKING:
@@ -430,6 +430,7 @@ class SessionConfig(BaseModel):
     base_url: str
     headers: dict[str, Any] | None = None
     auth: aiohttp.BasicAuth | None = None
+    extra_options: dict[str, Any] | None = None
 
 
 class AsyncHttpSession(LoggingMixin):
@@ -483,6 +484,10 @@ class AsyncHttpSession(LoggingMixin):
         return self.config.headers
 
     @property
+    def extra_options(self) -> dict[str, Any] | None:
+        return self.config.extra_options
+
+    @property
     def auth(self) -> aiohttp.BasicAuth | None:
         return self.config.auth
 
@@ -507,9 +512,9 @@ class AsyncHttpSession(LoggingMixin):
         """
         from tenacity import AsyncRetrying, stop_after_attempt, wait_fixed
 
-        extra_options = extra_options or {}
         url = _url_from_endpoint(self.base_url, endpoint)
         merged_headers = {**(self.headers or {}), **(headers or {})}
+        extra_options = {**(self.extra_options or {}), **(extra_options or {})}
 
         async def request_func() -> ClientResponse:
             response = await self._request(
@@ -607,6 +612,7 @@ class HttpAsyncHook(BaseHook):
             base_url: str = self.base_url
             auth: aiohttp.BasicAuth | None = None
             headers: dict[str, Any] = {}
+            extra_options: dict[str, Any] = {}
 
             if self.http_conn_id:
                 conn = await get_async_connection(conn_id=self.http_conn_id)
@@ -624,7 +630,7 @@ class HttpAsyncHook(BaseHook):
                     auth = self.auth_type(conn.login, conn.password)
 
                 if conn.extra:
-                    conn_extra_options, _ = _process_extra_options_from_connection(
+                    conn_extra_options, extra_options = _process_extra_options_from_connection(
                         conn=conn, extra_options={}
                     )
                     headers.update(conn_extra_options)
@@ -633,6 +639,7 @@ class HttpAsyncHook(BaseHook):
                 base_url=base_url,
                 headers=headers,
                 auth=auth,
+                extra_options=extra_options,
             )
         return self._config
 
@@ -669,14 +676,17 @@ class HttpAsyncHook(BaseHook):
             For example, ``run(json=obj)`` is passed as
             ``aiohttp.ClientSession().get(json=obj)``.
         """
-        if session is not None:
-            request = self._get_request_func(session=session)
-            config = await self.config()
-            return await AsyncHttpSession(hook=self, request=request, config=config).run(
-                endpoint=endpoint, data=data, json=json, headers=headers, extra_options=extra_options
-            )
+        try:
+            if session is not None:
+                request = self._get_request_func(session=session)
+                config = await self.config()
+                return await AsyncHttpSession(hook=self, request=request, config=config).run(
+                    endpoint=endpoint, data=data, json=json, headers=headers, extra_options=extra_options
+                )
 
-        async with self.session() as http:
-            return await http.run(
-                endpoint=endpoint, data=data, json=json, headers=headers, extra_options=extra_options
-            )
+            async with self.session() as http:
+                return await http.run(
+                    endpoint=endpoint, data=data, json=json, headers=headers, extra_options=extra_options
+                )
+        except ClientResponseError as e:
+            raise HttpErrorException(f"{e.status}:{e.message}")
