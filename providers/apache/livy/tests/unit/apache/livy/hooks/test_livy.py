@@ -593,12 +593,13 @@ class TestLivyAsyncHook:
         assert log_dump == {"id": 1, "log": ["mock_log_1", "mock_log_2"]}
 
     @pytest.mark.asyncio
-    @mock.patch("airflow.providers.apache.livy.hooks.livy.LivyAsyncHook.run")
-    async def test_run_method_success(self, mock_run):
+    @mock.patch("airflow.providers.http.hooks.http.aiohttp.ClientSession")
+    async def test_run_method_success(self, mock_session):
         """Asserts the run_method for success response."""
-        response = MagicMock(spec=Response)
-        response.json = AsyncMock(return_value={"id": 1})
-        mock_run.return_value = response
+        mock_session.return_value.__aenter__.return_value.post = AsyncMock()
+        mock_session.return_value.__aenter__.return_value.post.return_value.json = AsyncMock(
+            return_value={"id": 1}
+        )
         hook = LivyAsyncHook(livy_conn_id=LIVY_CONN_ID)
         response = await hook.run_method("localhost", "GET")
         assert response == {"status": "success", "response": {"id": 1}}
