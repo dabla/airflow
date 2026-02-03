@@ -24,7 +24,6 @@ import multidict
 import pytest
 import requests
 from aiohttp import ClientResponseError, RequestInfo
-from requests import Response
 from requests.exceptions import RequestException
 
 from airflow.models import Connection
