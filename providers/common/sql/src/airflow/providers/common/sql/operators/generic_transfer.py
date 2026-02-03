@@ -84,6 +84,8 @@ class GenericTransfer(BaseOperator):
         destination_conn_id: str,
         destination_hook_params: dict | None = None,
         rows_processor: Callable[..., list[Any]] | None = None,
+        # rows_processor is called as rows_processor(rows, **context);
+        # context keys vary, so Callable[..., list[Any]] is intentional.
         preoperator: str | list[str] | None = None,
         insert_args: dict | None = None,
         page_size: int | None = None,
