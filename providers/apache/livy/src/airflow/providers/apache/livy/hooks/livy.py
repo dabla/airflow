@@ -512,7 +512,6 @@ class LivyAsyncHook(HttpAsyncHook):
         :param headers: headers
         :return: http response
         """
-
         method = method or self.method
         if method not in {"GET", "PATCH", "POST", "PUT", "DELETE", "HEAD"}:
             return {"status": "error", "response": f"Invalid http method {method}"}
