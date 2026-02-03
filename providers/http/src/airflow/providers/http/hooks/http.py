@@ -35,7 +35,7 @@ from requests_toolbelt.adapters.socket_options import TCPKeepAliveAdapter
 from tenacity import retry_if_exception
 
 from airflow.providers.common.compat.sdk import AirflowException, BaseHook
-from airflow.providers.http.exceptions import HttpMethodException, HttpErrorException
+from airflow.providers.http.exceptions import HttpErrorException, HttpMethodException
 from airflow.utils.log.logging_mixin import LoggingMixin
 
 if TYPE_CHECKING:
