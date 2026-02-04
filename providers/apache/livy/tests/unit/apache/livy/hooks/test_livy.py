@@ -612,7 +612,7 @@ class TestLivyAsyncHook:
 
     @pytest.mark.asyncio
     @mock.patch("airflow.providers.http.hooks.http.aiohttp.ClientSession")
-    @mock.patch("airflow.providers.apache.livy.hooks.livy.get_async_connection")
+    @mock.patch("airflow.providers.http.hooks.http.get_async_connection")
     async def test_run_post_method_with_success(self, mock_get_connection, mock_session):
         """Asserts the run_method for success response for POST method."""
         mock_session.return_value.__aenter__.return_value.post = AsyncMock()
@@ -626,7 +626,7 @@ class TestLivyAsyncHook:
 
     @pytest.mark.asyncio
     @mock.patch("airflow.providers.http.hooks.http.aiohttp.ClientSession")
-    @mock.patch("airflow.providers.apache.livy.hooks.livy.get_async_connection")
+    @mock.patch("airflow.providers.http.hooks.http.get_async_connection")
     async def test_run_get_method_with_success(self, mock_get_connection, mock_session):
         """Asserts the run_method for GET method."""
         mock_session.return_value.__aenter__.return_value.get = AsyncMock()
@@ -641,7 +641,7 @@ class TestLivyAsyncHook:
 
     @pytest.mark.asyncio
     @mock.patch("airflow.providers.http.hooks.http.aiohttp.ClientSession")
-    @mock.patch("airflow.providers.apache.livy.hooks.livy.get_async_connection")
+    @mock.patch("airflow.providers.http.hooks.http.get_async_connection")
     async def test_run_patch_method_with_success(self, mock_get_connection, mock_session):
         """Asserts the run_method for PATCH method."""
         mock_session.return_value.__aenter__.return_value.patch = AsyncMock()
@@ -655,7 +655,7 @@ class TestLivyAsyncHook:
         assert response["response"] == {"hello": "world"}
 
     @pytest.mark.asyncio
-    @mock.patch("airflow.providers.apache.livy.hooks.livy.get_async_connection")
+    @mock.patch("airflow.providers.http.hooks.http.get_async_connection")
     async def test_run_unexpected_method_with_success(self, mock_get_connection):
         """Asserts the run_method for unexpected method error"""
         hook = LivyAsyncHook(livy_conn_id=LIVY_CONN_ID)
@@ -664,7 +664,7 @@ class TestLivyAsyncHook:
         assert response == {"response": "Invalid http method abc", "status": "error"}
 
     @pytest.mark.asyncio
-    @mock.patch("airflow.providers.apache.livy.hooks.livy.get_async_connection")
+    @mock.patch("airflow.providers.http.hooks.http.get_async_connection")
     async def test_run_put_method_with_type_error(self, mock_get_connection):
         """Asserts the run_method for TypeError."""
 
@@ -678,7 +678,7 @@ class TestLivyAsyncHook:
 
     @pytest.mark.asyncio
     @mock.patch("airflow.providers.http.hooks.http.aiohttp.ClientSession")
-    @mock.patch("airflow.providers.apache.livy.hooks.livy.get_async_connection")
+    @mock.patch("airflow.providers.http.hooks.http.get_async_connection")
     async def test_run_method_with_client_response_error(self, mock_get_connection, mock_session):
         """Asserts the run_method for Client Response Error."""
 
