@@ -1029,11 +1029,15 @@ class TriggerRunner:
                 deserialised_kwargs = {k: smart_decode_trigger_kwargs(v) for k, v in kw.items()}
 
                 if ti := workload.ti:
-                    runtime_ti = create_runtime_ti(workload.dag_data)
-                    context = runtime_ti.get_template_context()
                     trigger_name = f"{ti.dag_id}/{ti.run_id}/{ti.task_id}/{ti.map_index}/{ti.try_number} (ID {trigger_id})"
                     trigger_instance = trigger_class(**deserialised_kwargs)
-                    trigger_instance.task_instance = runtime_ti
+
+                    if workload.dag_data:
+                        runtime_ti = create_runtime_ti(workload.dag_data)
+                        context = runtime_ti.get_template_context()
+                        trigger_instance.task_instance = runtime_ti
+                    else:
+                        trigger_instance.task_instance = ti
                 else:
                     trigger_name = f"ID {trigger_id}"
                     trigger_instance = trigger_class(**deserialised_kwargs)
