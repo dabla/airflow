@@ -70,9 +70,8 @@ class DBDagBag:
 
     @staticmethod
     def _version_from_dag_run(dag_run: DagRun, *, session: Session) -> DagVersion | None:
-        if not dag_run.bundle_version:
-            if dag_version := DagVersion.get_latest_version(dag_id=dag_run.dag_id, session=session):
-                return dag_version
+        if dag_run.bundle_version:
+            return session.get(DagVersion, dag_run.bundle_version)
 
         # Check if created_dag_version relationship is already loaded to avoid DetachedInstanceError
         info: Any = inspect(dag_run)
@@ -81,7 +80,11 @@ class DBDagBag:
             return dag_run.created_dag_version
 
         # Relationship not loaded, fetch it explicitly from current session
-        return session.get(DagVersion, dag_run.created_dag_version_id)
+        if dag_run.created_dag_version_id:
+            return session.get(DagVersion, dag_run.created_dag_version_id)
+
+        # Legacy fallback
+        return DagVersion.get_latest_version(dag_id=dag_run.dag_id, session=session)
 
     def get_dag_for_run(self, dag_run: DagRun, session: Session) -> SerializedDAG | None:
         if version := self._version_from_dag_run(dag_run=dag_run, session=session):
