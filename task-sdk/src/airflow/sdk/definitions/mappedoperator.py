@@ -226,12 +226,15 @@ class OperatorPartial:
         task_group = partial_kwargs.pop("task_group")
         start_date = partial_kwargs.pop("start_date", None)
         end_date = partial_kwargs.pop("end_date", None)
-        start_from_trigger = bool(
-            partial_kwargs.get("start_from_trigger", False)
-            or getattr(self.operator_class, "start_from_trigger", False)
+        start_from_trigger = (
+            partial_kwargs["start_from_trigger"]
+            if "start_from_trigger" in partial_kwargs
+            else getattr(self.operator_class, "start_from_trigger", False)
         )
-        start_trigger_args = partial_kwargs.get("start_trigger_args", None) or getattr(
-            self.operator_class, "start_trigger_args", None
+        start_trigger_args = (
+            partial_kwargs["start_trigger_args"]
+            if "start_trigger_args" in partial_kwargs
+            else getattr(self.operator_class, "start_trigger_args", None)
         )
 
         try:
