@@ -1387,9 +1387,7 @@ class SQLInsertRowsOperator(BaseSQLOperator):
             return [column for column in self.columns if column not in self.ignored_columns]
         return self.columns
 
-    def _insert_rows(self, context: Context):
-        rows = self.rows.resolve(context=context) if isinstance(self.rows, XComArg) else self.rows
-
+    def _insert_rows(self, rows: list[Any], context: Context):
         if self._rows_processor:
             rows = self._rows_processor(rows, **context)
 
@@ -1403,7 +1401,9 @@ class SQLInsertRowsOperator(BaseSQLOperator):
         )
 
     def execute(self, context: Context) -> Any:
-        if not self.rows:
+        rows = self.rows.resolve(context=context) if isinstance(self.rows, XComArg) else self.rows
+
+        if rows:
             raise AirflowSkipException(f"Skipping task {self.task_id} because no rows.")
 
         self.log.debug("Table: %s", self.table_name_with_schema)
@@ -1412,7 +1412,7 @@ class SQLInsertRowsOperator(BaseSQLOperator):
             self.log.debug("Running preoperator")
             self.log.debug(self.preoperator)
             self.get_db_hook().run(self.preoperator)
-        self._insert_rows(context=context)
+        self._insert_rows(rows=rows, context=context)
         if self.postoperator:
             self.log.debug("Running postoperator")
             self.log.debug(self.postoperator)
