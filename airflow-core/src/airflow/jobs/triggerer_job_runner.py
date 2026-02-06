@@ -660,10 +660,6 @@ class TriggerRunnerSupervisor(WatchedSubprocess):
             return None
 
         log_path = render_log_fname(ti=trigger.task_instance)
-        serialized_dag_model = dag_bag.get_dag_model(
-            version_id=trigger.task_instance.dag_version_id,
-            session=session,
-        )
         ser_ti = workloads.TaskInstance.model_validate(trigger.task_instance, from_attributes=True)
 
         # When producing logs from TIs, include the job id producing the logs to disambiguate it.
@@ -672,13 +668,30 @@ class TriggerRunnerSupervisor(WatchedSubprocess):
             ti=ser_ti,  # type: ignore
         )
 
+        # When a trigger contains kwargs, it potentially means it could have templated fields, thus we need
+        # to load the SerializedDagModel so we can build a RuntimeTaskInstance later on which will allow us
+        # to build a context on which we will render the templated fields.
+        if trigger.encrypted_kwargs:
+            serialized_dag_model = dag_bag.get_dag_model(
+                version_id=trigger.task_instance.dag_version_id,
+                session=session,
+            )
+
+            if serialized_dag_model:
+                return workloads.RunTrigger(
+                    id=trigger.id,
+                    classpath=trigger.classpath,
+                    encrypted_kwargs=trigger.encrypted_kwargs,
+                    ti=ser_ti,
+                    timeout_after=trigger.task_instance.trigger_timeout,
+                    dag_data=serialized_dag_model.data,
+                )
         return workloads.RunTrigger(
             id=trigger.id,
             classpath=trigger.classpath,
             encrypted_kwargs=trigger.encrypted_kwargs,
             ti=ser_ti,
             timeout_after=trigger.task_instance.trigger_timeout,
-            dag_data=serialized_dag_model.data if serialized_dag_model else None,
         )
 
     def update_triggers(self, requested_trigger_ids: set[int]):
