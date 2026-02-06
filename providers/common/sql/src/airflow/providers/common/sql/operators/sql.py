@@ -1403,7 +1403,7 @@ class SQLInsertRowsOperator(BaseSQLOperator):
     def execute(self, context: Context) -> Any:
         rows = self.rows.resolve(context=context) if isinstance(self.rows, XComArg) else self.rows
 
-        if rows:
+        if not rows:
             raise AirflowSkipException(f"Skipping task {self.task_id} because no rows.")
 
         self.log.debug("Table: %s", self.table_name_with_schema)
