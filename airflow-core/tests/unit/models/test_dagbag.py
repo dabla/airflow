@@ -88,16 +88,16 @@ class TestDBDagBag:
     def test_get_dag_calls_get_dag_model_and__read_dag(self):
         """It should call get_dag_model and then _read_dag."""
         mock_serdag = MagicMock(spec=SerializedDagModel)
+        mock_serdag.dag_version_id = "v1"
         mock_dag = MagicMock(spec=SerializedDAG)
+        mock_dag_version = MagicMock()
+        mock_dag_version.serialized_dag = mock_serdag
+        mock_serdag.dag = mock_dag
+        self.session.get.return_value = mock_dag_version
 
-        with (
-            patch.object(self.db_dag_bag, "get_dag_model", return_value=mock_serdag) as mock_get_model,
-            patch.object(self.db_dag_bag, "_read_dag", return_value=mock_dag) as mock_read,
-        ):
-            result = self.db_dag_bag.get_dag("v1", session=self.session)
+        result = self.db_dag_bag.get_dag("v1", session=self.session)
 
-        mock_get_model.assert_called_once_with(version_id="v1", session=self.session)
-        mock_read.assert_called_once_with(mock_serdag)
+        self.session.get.assert_called_once()
         assert result == mock_dag
 
     def test_get_dag_returns_none_when_model_missing(self):
