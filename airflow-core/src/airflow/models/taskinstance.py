@@ -1465,6 +1465,7 @@ class TaskInstance(Base, LoggingMixin):
         from airflow.models.trigger import Trigger
 
         if TYPE_CHECKING:
+            assert self.start_date
             assert isinstance(self.task, Operator)
 
         if start_trigger_args := self.start_trigger_args:
