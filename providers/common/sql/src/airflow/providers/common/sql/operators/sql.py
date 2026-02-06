@@ -1307,7 +1307,7 @@ class SQLInsertRowsOperator(BaseSQLOperator):
         will be matched with the column names, ignored columns will be filtered out.
     :param rows_processor: (optional) A callable applied once per batch of rows before insertion.
         It receives the full list of rows and the task context, and must return a list of rows compatible with
-        the underlying hook's.
+        the underlying hook.
     :param preoperator: sql statement or list of statements to be executed prior to loading the data. (templated)
     :param postoperator: sql statement or list of statements to be executed after loading the data. (templated)
     :param insert_args: (optional) dictionary of additional arguments passed to the underlying hook's
