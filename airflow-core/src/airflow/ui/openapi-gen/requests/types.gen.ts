@@ -1595,6 +1595,10 @@ export type ValidationError = {
     loc: Array<(string | number)>;
     msg: string;
     type: string;
+    input?: unknown;
+    ctx?: {
+        [key: string]: unknown;
+    };
 };
 
 /**
@@ -1995,6 +1999,7 @@ export type HistoricalMetricDataResponse = {
  */
 export type LightGridTaskInstanceSummary = {
     task_id: string;
+    task_display_name: string;
     state: TaskInstanceState | null;
     child_states: {
     [key: string]: (number);
@@ -3425,6 +3430,7 @@ export type GetAuthMenusResponse = MenuItemCollectionResponse;
 export type GetCurrentUserInfoResponse = AuthenticatedMeResponse;
 
 export type GetDependenciesData = {
+    dependencyType?: 'scheduling' | 'data';
     nodeId?: string | null;
 };
 
