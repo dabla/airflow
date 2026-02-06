@@ -705,7 +705,16 @@ class TestLivyAsyncHook:
         assert response == {"response": "Invalid http method abc", "status": "error"}
 
     @pytest.mark.asyncio
-    async def test_run_put_method_with_type_error(self):
+    @mock.patch(
+        "airflow.providers.common.compat.connection.get_async_connection",
+        return_value=Connection(
+            conn_id=LIVY_CONN_ID,
+            conn_type="http",
+            host="http://host",
+            port=80,
+        ),
+    )
+    async def test_run_put_method_with_type_error(self, mock_get_connection):
         """Asserts the run_method for TypeError."""
 
         async def mock_fun(arg1, arg2, arg3, arg4):
