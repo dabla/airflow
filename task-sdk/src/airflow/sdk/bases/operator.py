@@ -851,6 +851,14 @@ class BaseOperator(AbstractOperator, metaclass=BaseOperatorMeta):
         to render templates as native Python types. If False, a Jinja
         ``Environment`` is used to render templates as string values.
         If None (default), inherits from the DAG setting.
+    :param start_from_trigger: If True, the operator starts execution directly in the triggerer,
+        skipping the initial worker execution phase. In this mode, templated fields are rendered
+        inside the triggerer instead of the worker. This avoids an extra round trip to a worker,
+        but may increase load on the triggerer, since the DAG must be serialized in order to
+        render templated fields. Use with care for DAGs with many tasks or heavy templating.
+    :param start_trigger_args: Used together with ``start_from_trigger`` to explicitly specify
+        which operator fields should be passed to the trigger. This helps limit the amount of
+        data serialized and sent to the triggerer.
     """
 
     task_id: str
