@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import hashlib
 from typing import TYPE_CHECKING, Any
+from uuid import UUID
 
 from sqlalchemy import String, inspect, select
 from sqlalchemy.orm import Mapped, joinedload, mapped_column
@@ -45,7 +46,7 @@ class DBDagBag:
     """
 
     def __init__(self, load_op_links: bool = True) -> None:
-        self._dags: dict[str, SerializedDagModel] = {}  # dag_version_id to dag
+        self._dags: dict[UUID, SerializedDagModel] = {}  # dag_version_id to dag
         self.load_op_links = load_op_links
 
     def _read_dag(self, serialized_dag_model: SerializedDagModel) -> SerializedDAG | None:
@@ -54,7 +55,7 @@ class DBDagBag:
             self._dags[serialized_dag_model.dag_version_id] = serialized_dag_model
         return dag
 
-    def get_dag_model(self, version_id: str, session: Session) -> SerializedDagModel | None:
+    def get_dag_model(self, version_id: UUID, session: Session) -> SerializedDagModel | None:
         if not (serialized_dag_model := self._dags.get(version_id)):
             dag_version = session.get(DagVersion, version_id, options=[joinedload(DagVersion.serialized_dag)])
             if not dag_version or not (serialized_dag_model := dag_version.serialized_dag):
@@ -62,7 +63,7 @@ class DBDagBag:
             self._read_dag(serialized_dag_model)
         return serialized_dag_model
 
-    def get_dag(self, version_id: str, session: Session) -> SerializedDAG | None:
+    def get_dag(self, version_id: UUID, session: Session) -> SerializedDAG | None:
         if serialized_dag_model := self.get_dag_model(version_id=version_id, session=session):
             return serialized_dag_model.dag
         return None
