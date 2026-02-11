@@ -929,7 +929,7 @@ def test_start_from_trigger_is_false_when_no_task_instance():
 
 
 def test_start_from_trigger_is_false_when_task_instance_without_templated_fields(
-    create_task_instance
+    create_task_instance,
 ):
     trigger = Trigger(classpath="airflow.triggers.testing.SuccessTrigger", kwargs={})
     trigger.task_instance = create_task_instance(task_id="task_id", run_id="run_id")
@@ -938,7 +938,7 @@ def test_start_from_trigger_is_false_when_task_instance_without_templated_fields
 
 
 def test_start_from_trigger_is_false_when_task_instance_with_templated_fields_but_no_start_trigger_args(
-    create_task_instance
+    create_task_instance,
 ):
     trigger = Trigger(classpath="airflow.triggers.testing.SuccessTrigger", kwargs={})
     task = EmptyOperator(task_id="task_id")
@@ -949,7 +949,7 @@ def test_start_from_trigger_is_false_when_task_instance_with_templated_fields_bu
 
 
 def test_start_from_trigger_is_true_when_task_instance_without_templated_fields_and_start_trigger_args(
-    create_task_instance
+    create_task_instance,
 ):
     trigger = Trigger(classpath="airflow.triggers.testing.SuccessTrigger", kwargs={})
     trigger.task_instance = create_task_instance(
@@ -966,7 +966,9 @@ def test_start_from_trigger_is_true_when_task_instance_without_templated_fields_
     assert not trigger.start_from_trigger
 
 
-def test_start_from_trigger_is_true_when_task_instance_with_templated_fields_and_start_trigger_args(create_task_instance):
+def test_start_from_trigger_is_true_when_task_instance_with_templated_fields_and_start_trigger_args(
+    create_task_instance,
+):
     trigger = Trigger(classpath="airflow.triggers.testing.SuccessTrigger", kwargs={})
     task = EmptyOperator(task_id="task_id")
     task.template_fields = ["param1", "param2"]
