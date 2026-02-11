@@ -93,7 +93,8 @@ class BaseTrigger(abc.ABC, Templater, LoggingMixin):
 
     @property
     def task(self) -> Operator | None:
-        if self.task_instance:
+        # We must check if the TaskInstance is the generated Pydantic one or the RuntimeTaskInstance
+        if self.task_instance and hasattr(self.task_instance, "task"):
             return self.task_instance.task
         return None
 
