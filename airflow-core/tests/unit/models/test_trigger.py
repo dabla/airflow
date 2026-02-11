@@ -40,10 +40,11 @@ from airflow.sdk.definitions.callback import AsyncCallback
 from airflow.serialization.serialized_objects import BaseSerialization
 from airflow.triggers.base import (
     BaseTrigger,
+    StartTriggerArgs,
     TaskFailedEvent,
     TaskSkippedEvent,
     TaskSuccessEvent,
-    TriggerEvent, StartTriggerArgs,
+    TriggerEvent,
 )
 from airflow.utils.session import create_session
 from airflow.utils.state import State
@@ -927,14 +928,18 @@ def test_start_from_trigger_is_false_when_no_task_instance():
     assert not trigger.start_from_trigger
 
 
-def test_start_from_trigger_is_false_when_task_instance_without_templated_fields(create_task_instance):
+def test_start_from_trigger_is_false_when_task_instance_without_templated_fields(
+    create_task_instance
+):
     trigger = Trigger(classpath="airflow.triggers.testing.SuccessTrigger", kwargs={})
     trigger.task_instance = create_task_instance(task_id="task_id", run_id="run_id")
 
     assert not trigger.start_from_trigger
 
 
-def test_start_from_trigger_is_false_when_task_instance_with_templated_fields_but_no_start_trigger_args(create_task_instance):
+def test_start_from_trigger_is_false_when_task_instance_with_templated_fields_but_no_start_trigger_args(
+    create_task_instance
+):
     trigger = Trigger(classpath="airflow.triggers.testing.SuccessTrigger", kwargs={})
     task = EmptyOperator(task_id="task_id")
     task.template_fields = ["param1", "param2"]
@@ -943,7 +948,9 @@ def test_start_from_trigger_is_false_when_task_instance_with_templated_fields_bu
     assert not trigger.start_from_trigger
 
 
-def test_start_from_trigger_is_true_when_task_instance_without_templated_fields_and_start_trigger_args(create_task_instance):
+def test_start_from_trigger_is_true_when_task_instance_without_templated_fields_and_start_trigger_args(
+    create_task_instance
+):
     trigger = Trigger(classpath="airflow.triggers.testing.SuccessTrigger", kwargs={})
     trigger.task_instance = create_task_instance(
         task_id="task_id",
