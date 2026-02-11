@@ -15,7 +15,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Hook for winrm remote execution."""
+"""Trigger for winrm remote execution."""
 
 from __future__ import annotations
 
