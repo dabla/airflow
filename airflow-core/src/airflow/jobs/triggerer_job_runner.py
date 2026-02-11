@@ -668,10 +668,14 @@ class TriggerRunnerSupervisor(WatchedSubprocess):
             ti=ser_ti,  # type: ignore
         )
 
-        # When a TaskInstance of a Trigger contains start_trigger_args and has templated fields, it means
-        # we need to load the SerializedDagModel so we can build a RuntimeTaskInstance later on which
+        # When a TaskInstance of a Trigger contains start_trigger_args and has a task with templated fields,
+        # it means we need to load the SerializedDagModel so we can build a RuntimeTaskInstance later on which
         # will allow us to build a context on which we will render the templated fields.
-        if trigger.task_instance.template_fields and trigger.task_instance.start_trigger_args:
+        if (
+            trigger.task_instance.task and
+            trigger.task_instance.task.template_fields and
+            trigger.task_instance.start_trigger_args
+        ):
             serialized_dag_model = dag_bag.get_dag_model(
                 version_id=trigger.task_instance.dag_version_id,
                 session=session,
