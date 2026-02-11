@@ -62,7 +62,6 @@ dependencies = [
     "apache-airflow-providers-http>=5.1.0",  # use next version
     "apache-airflow-providers-common-compat>=1.12.0",
     "aiohttp>=3.9.2",
-    "asgiref>=2.3.0",  # TODO: I think this one can be removed?  Already present in apache-airflow-providers-common-compat
 ]
 
 [dependency-groups]
