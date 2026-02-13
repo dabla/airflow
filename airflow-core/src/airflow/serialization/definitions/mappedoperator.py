@@ -481,7 +481,7 @@ class SerializedMappedOperator(DAGNode):
             return False
         # TODO (GH-52141): Implement this.
         log.warning(
-            "Starting a mapped task '%s' from dag '%s' on triggerer is currently unsupported",
+            "Starting a mapped task %r from dag %r on triggerer is currently unsupported",
             self.task_id,
             self.dag_id,
         )
