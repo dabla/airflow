@@ -156,6 +156,8 @@ Dockerfile.ci @potiuk @ashb @gopidesupavan @amoghrajesh @jscheffl @bugraoz93 @ja
 # AIP-72 - Task SDK
 # Python SDK
 /task-sdk/ @ashb @kaxil @amoghrajesh
+/task-sdk/**/executor.py @dabla
+/task-sdk/**/iterableoperator.py @dabla
 
 # Golang SDK
 /go-sdk/ @ashb @amoghrajesh
