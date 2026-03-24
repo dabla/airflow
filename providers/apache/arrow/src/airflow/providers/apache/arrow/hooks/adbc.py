@@ -179,6 +179,17 @@ class AdbcHook(DbApiHook):
             schema=schema,
         )
 
+    @classmethod
+    def _execute_native_bind(cls, cursor, statement: str, record_batch: RecordBatch) -> None:
+        """Execute a statement using native Arrow bind on the cursor."""
+        cursor.bind(record_batch)
+        cursor.execute(statement)
+
+    @classmethod
+    def _execute_executemany(cls, cursor, statement: str, record_batch: RecordBatch) -> None:
+        """Execute a statement using cursor.executemany."""
+        cursor.executemany(statement, record_batch)
+
     def insert_rows(
         self,
         table,
@@ -241,9 +252,9 @@ class AdbcHook(DbApiHook):
             with closing(conn.cursor()) as cur:
                 use_native_bind = hasattr(cur, "bind")
 
-                if use_native_bind:
-                    self.log.info("Native Arrow bind supported!")
-                elif self.supports_executemany or executemany:
+                # If native bind is not available, consider executemany path and
+                # try to enable fast_executemany if requested and supported.
+                if not use_native_bind and (self.supports_executemany or executemany):
                     if fast_executemany:
                         with contextlib.suppress(AttributeError):
                             # Try to set the fast_executemany attribute
@@ -253,15 +264,16 @@ class AdbcHook(DbApiHook):
                                 self.get_conn_id(),
                             )
 
+                # Choose the execution callable once based on cursor capability
+                if use_native_bind:
+                    self.log.info("Native Arrow bind supported!")
+                    execute_batch = self._execute_native_bind
+                else:
+                    execute_batch = self._execute_executemany
+
                 for chunked_rows in chunked(rows, commit_every):
                     batch = self._to_record_batch(rows=chunked_rows, schema=table_schema)
-
-                    # Prefer native Arrow bind if supported
-                    if use_native_bind:
-                        cur.bind(batch)
-                        cur.execute(sql)
-                    else:
-                        cur.executemany(sql, batch)
+                    execute_batch(cur, sql, batch)
 
                     conn.commit()
 
