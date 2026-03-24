@@ -585,7 +585,9 @@ class HttpAsyncHook(BaseHook):
         self.retry_delay = retry_delay
         self._config: SessionConfig | None = None
 
-    def _get_request_func(self, session: aiohttp.ClientSession, method: str | None = None) -> Callable[..., Any]:
+    def _get_request_func(
+        self, session: aiohttp.ClientSession, method: str | None = None
+    ) -> Callable[..., Any]:
         http_method = method or self.method
         if http_method == "GET":
             return session.get
