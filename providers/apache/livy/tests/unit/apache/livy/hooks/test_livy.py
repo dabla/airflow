@@ -659,8 +659,7 @@ class TestLivyAsyncHook:
             return_value={"hello": "world"}
         )
         hook = LivyAsyncHook(livy_conn_id=LIVY_CONN_ID)
-        hook.method = "GET"
-        response = await hook.run_method("api/jobs/runs/get")
+        response = await hook.run_method("api/jobs/runs/get", method="GET")
         assert response["status"] == "success"
         assert response["response"] == {"hello": "world"}
 
@@ -682,8 +681,7 @@ class TestLivyAsyncHook:
             return_value={"hello": "world"}
         )
         hook = LivyAsyncHook(livy_conn_id=LIVY_CONN_ID)
-        hook.method = "PATCH"
-        response = await hook.run_method("api/jobs/runs/get")
+        response = await hook.run_method("api/jobs/runs/get", method="PATCH")
         assert response["status"] == "success"
         assert response["response"] == {"hello": "world"}
 
