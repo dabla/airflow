@@ -16,6 +16,7 @@
 # under the License.
 from __future__ import annotations
 
+import importlib
 import json
 
 import pytest
@@ -25,6 +26,10 @@ from airflow.models import Connection
 from airflow.providers.apache.arrow.hooks.adbc import AdbcHook
 
 
+@pytest.mark.skipif(
+    importlib.util.find_spec("adbc_driver_sqlite") is None,
+    reason="adbc_driver_sqlite not installed",
+)
 class TestAdbcHook:
     @pytest.fixture(autouse=True)
     def setup_connections(self, create_connection_without_db):
