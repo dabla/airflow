@@ -24,7 +24,6 @@ from collections.abc import Iterable, Mapping
 from contextlib import closing
 from functools import cached_property
 from typing import Any
-from urllib.parse import quote
 
 from adbc_driver_manager.dbapi import Connection, connect
 from more_itertools import chunked
@@ -109,6 +108,8 @@ class AdbcHook(DbApiHook):
 
     @cached_property
     def uri(self) -> str:
+        if "::" in self.connection.host:
+            return self.connection.host
         uri = self.get_uri()
         return uri.replace(f"{self.conn_type.lower().replace('_', '-')}://", f"{self.dialect_name.lower().replace('_', '-')}://")
 
