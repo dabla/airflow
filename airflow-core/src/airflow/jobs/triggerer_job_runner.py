@@ -30,7 +30,7 @@ from contextlib import suppress
 from datetime import datetime
 from socket import socket
 from traceback import format_exception
-from typing import TYPE_CHECKING, Annotated, Any, BinaryIO, ClassVar, Literal, TextIO, TypedDict
+from typing import TYPE_CHECKING, Annotated, Any, BinaryIO, Callable, ClassVar, Literal, TextIO, TypedDict
 
 import anyio
 import attrs
@@ -666,7 +666,7 @@ class TriggerRunnerSupervisor(WatchedSubprocess):
         self,
         trigger: Trigger,
         dag_bag: DBDagBag,
-        render_log_fname: str,
+        render_log_fname: Callable[..., str],
         session: Session = NEW_SESSION,
     ) -> workloads.RunTrigger | None:
         if trigger.task_instance is None:
