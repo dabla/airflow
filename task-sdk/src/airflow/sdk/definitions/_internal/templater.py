@@ -18,7 +18,7 @@
 from __future__ import annotations
 
 import datetime
-import logging
+import structlog
 import os
 from collections.abc import Collection, Iterable, Iterator, Sequence
 from dataclasses import dataclass
@@ -55,7 +55,7 @@ class LiteralValue(ResolveMixin):
         return self.value
 
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger(__name__)
 
 
 class Templater:
@@ -98,7 +98,7 @@ class Templater:
                     try:
                         setattr(self, field, env.loader.get_source(env, content)[0])  # type: ignore
                     except Exception:
-                        log.exception("Failed to resolve template field %r", field)
+                        log.exception("Failed to resolve template field", field=field)
                 elif isinstance(content, list):
                     env = self.get_template_env()
                     for i, item in enumerate(content):
@@ -106,7 +106,7 @@ class Templater:
                             try:
                                 content[i] = env.loader.get_source(env, item)[0]  # type: ignore
                             except Exception:
-                                log.exception("Failed to get source %s", item)
+                                log.exception("Failed to get source", source=item)
         self.prepare_template()
 
     def _should_render_native(self, dag: DAG | None = None) -> bool:
@@ -145,16 +145,16 @@ class Templater:
                 # https://github.com/pandas-dev/pandas/blob/9135c3aaf12d26f857fcc787a5b64d521c51e379/pandas/core/generic.py#L1465
                 if hasattr(self, "task_id"):
                     log.info(
-                        "Unable to check if the value of type '%s' is False for task '%s', field '%s'.",
-                        type(value).__name__,
-                        self.task_id,
-                        attr_name,
+                        "Unable to check if the value is False for a value of unexpected type",
+                        value_type=type(value).__name__,
+                        task_id=self.task_id,
+                        field=attr_name,
                     )
                 else:
                     log.info(
-                        "Unable to check if the value of type '%s' is False for field '%s'.",
-                        type(value).__name__,
-                        attr_name,
+                        "Unable to check if the value is False for a value of unexpected type",
+                        value_type=type(value).__name__,
+                        field=attr_name,
                     )
                 # We may still want to render custom classes which do not support __bool__
             yield attr_name, value
@@ -194,17 +194,17 @@ class Templater:
                 masked_value = redact(value)
                 if hasattr(self, "task_id"):
                     log.exception(
-                        "Exception rendering Jinja template for task '%s', field '%s'. Template: %r",
-                        self.task_id,
-                        attr_name,
-                        masked_value,
+                        "Exception rendering Jinja template",
+                        task_id=self.task_id,
+                        field=attr_name,
+                        template=masked_value,
                     )
                 else:
                     log.exception(
-                        "Exception rendering Jinja template for %s, field '%s'. Template: %r",
-                        type(parent).__name__,
-                        attr_name,
-                        masked_value,
+                        "Exception rendering Jinja template",
+                        parent_type=type(parent).__name__,
+                        field=attr_name,
+                        template=masked_value,
                     )
                 raise
             else:
