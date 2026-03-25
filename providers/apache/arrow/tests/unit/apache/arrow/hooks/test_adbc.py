@@ -24,7 +24,7 @@ from unittest import mock
 import pytest
 from adbc_driver_manager import dbapi
 from adbc_driver_manager.dbapi import Cursor
-from pyarrow import schema, field, string
+from pyarrow import field, schema, string
 
 from airflow.models import Connection
 from airflow.providers.apache.arrow.hooks.adbc import AdbcHook
