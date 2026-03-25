@@ -55,7 +55,8 @@ class DBDagBag:
         return dag
 
     def get_serialized_dag_model(self, version_id: UUID, session: Session) -> SerializedDagModel | None:
-        """Return the SerializedDagModel for a given dag version id.
+        """
+        Return the SerializedDagModel for a given dag version id.
 
         This will first consult the in-memory cache keyed by the dag version id. If the
         model is not cached, the database is queried for a corresponding :class:`DagVersion`

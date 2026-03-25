@@ -25,12 +25,12 @@ import signal
 import sys
 import time
 from collections import deque
-from collections.abc import Generator, Iterable
+from collections.abc import Callable, Generator, Iterable
 from contextlib import suppress
 from datetime import datetime
 from socket import socket
 from traceback import format_exception
-from typing import TYPE_CHECKING, Annotated, Any, BinaryIO, Callable, ClassVar, Literal, TextIO, TypedDict
+from typing import TYPE_CHECKING, Annotated, Any, BinaryIO, ClassVar, Literal, TextIO, TypedDict
 
 import anyio
 import attrs
@@ -775,7 +775,10 @@ class TriggerRunnerSupervisor(WatchedSubprocess):
                     continue
 
                 if workload := self._create_workload(
-                    trigger=new_trigger_orm, dag_bag=dag_bag, render_log_fname=render_log_fname, session=session
+                    trigger=new_trigger_orm,
+                    dag_bag=dag_bag,
+                    render_log_fname=render_log_fname,
+                    session=session,
                 ):
                     to_create.append(workload)
 
