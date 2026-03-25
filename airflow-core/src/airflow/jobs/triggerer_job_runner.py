@@ -90,7 +90,7 @@ from airflow.serialization.serialized_objects import DagSerialization
 from airflow.triggers.base import BaseEventTrigger, BaseTrigger, DiscrimatedTriggerEvent, TriggerEvent
 from airflow.utils.helpers import log_filename_template_renderer
 from airflow.utils.log.logging_mixin import LoggingMixin
-from airflow.utils.session import NEW_SESSION, create_session, provide_session
+from airflow.utils.session import create_session, provide_session
 
 if TYPE_CHECKING:
     from opentelemetry.util._decorator import _AgnosticContextManager
@@ -667,7 +667,7 @@ class TriggerRunnerSupervisor(WatchedSubprocess):
         trigger: Trigger,
         dag_bag: DBDagBag,
         render_log_fname: Callable[..., str],
-        session: Session = NEW_SESSION,
+        session: Session,
     ) -> workloads.RunTrigger | None:
         if trigger.task_instance is None:
             return workloads.RunTrigger(
