@@ -63,7 +63,7 @@ class TestDBDagBag:
         assert result is None
         assert "v1" not in self.db_dag_bag._dags
 
-    def test_get_dag_model(self):
+    def test_get_serialized_dag_model(self):
         """It should return the cached SerializedDagModel if already loaded."""
         mock_serdag = MagicMock(spec=SerializedDagModel)
         mock_serdag.dag_version_id = "v1"
@@ -71,17 +71,17 @@ class TestDBDagBag:
         mock_dag_version.serialized_dag = mock_serdag
         self.session.get.return_value = mock_dag_version
 
-        self.db_dag_bag.get_dag_model("v1", session=self.session)
-        result = self.db_dag_bag.get_dag_model("v1", session=self.session)
+        self.db_dag_bag.get_serialized_dag_model("v1", session=self.session)
+        result = self.db_dag_bag.get_serialized_dag_model("v1", session=self.session)
 
         assert result == mock_serdag
         self.session.get.assert_called_once()
 
-    def test_get_dag_model_returns_none_when_not_found(self):
+    def test_get_serialized_dag_model_returns_none_when_not_found(self):
         """It should return None if version_id not found in DB."""
         self.session.get.return_value = None
 
-        result = self.db_dag_bag.get_dag_model("v1", session=self.session)
+        result = self.db_dag_bag.get_serialized_dag_model("v1", session=self.session)
 
         assert result is None
 

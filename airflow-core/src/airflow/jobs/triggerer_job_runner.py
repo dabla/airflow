@@ -693,7 +693,7 @@ class TriggerRunnerSupervisor(WatchedSubprocess):
             ti=ser_ti,  # type: ignore
         )
 
-        serialized_dag_model = dag_bag.get_dag_model(
+        serialized_dag_model = dag_bag.get_serialized_dag_model(
             version_id=trigger.task_instance.dag_version_id,
             session=session,
         )
