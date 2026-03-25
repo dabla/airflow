@@ -662,12 +662,11 @@ class TriggerRunnerSupervisor(WatchedSubprocess):
             extra_tags={"hostname": self.job.hostname},
         )
 
-    @provide_session
-    def create_workload(
+    def _create_workload(
         self,
         trigger: Trigger,
         dag_bag: DBDagBag,
-        render_log_fname=log_filename_template_renderer(),
+        render_log_fname: str,
         session: Session = NEW_SESSION,
     ) -> workloads.RunTrigger | None:
         if trigger.task_instance is None:
@@ -731,6 +730,7 @@ class TriggerRunnerSupervisor(WatchedSubprocess):
         trigger set.
         """
         dag_bag = DBDagBag()
+        render_log_fname = log_filename_template_renderer()
         known_trigger_ids = (
             self.running_triggers.union(x[0] for x in self.events)
             .union(self.cancelling_triggers)
@@ -774,8 +774,8 @@ class TriggerRunnerSupervisor(WatchedSubprocess):
                     )
                     continue
 
-                if workload := self.create_workload(
-                    trigger=new_trigger_orm, dag_bag=dag_bag, session=session
+                if workload := self._create_workload(
+                    trigger=new_trigger_orm, dag_bag=dag_bag, render_log_fname=render_log_fname, session=session
                 ):
                     to_create.append(workload)
 
@@ -1285,7 +1285,7 @@ class TriggerRunner:
         self.log.info("trigger %s starting", name)
         with _make_trigger_span(ti=trigger.task_instance, trigger_id=trigger_id, name=name) as span:
             try:
-                if context:
+                if context is not None:
                     trigger.render_template_fields(context=context)
 
                 async for event in trigger.run():
