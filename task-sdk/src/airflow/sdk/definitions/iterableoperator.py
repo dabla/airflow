@@ -18,7 +18,6 @@
 from __future__ import annotations
 
 import asyncio
-import copy
 import os
 from collections import deque
 from collections.abc import Iterable, Sequence
@@ -284,7 +283,7 @@ class IterableOperator(BaseOperator):
         with TaskExecutor(task_instance=task_instance) as executor:
             return executor.run(
                 context={
-                    **copy.deepcopy(context),
+                    **dict(context),
                     **{
                         "ti": task_instance,
                         "task_instance": task_instance,
@@ -297,7 +296,7 @@ class IterableOperator(BaseOperator):
         async with TaskExecutor(task_instance=task_instance) as executor:
             return await executor.arun(
                 context={
-                    **copy.deepcopy(context),
+                    **dict(context),
                     **{
                         "ti": task_instance,
                         "task_instance": task_instance,
