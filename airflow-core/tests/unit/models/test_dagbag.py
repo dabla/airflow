@@ -102,6 +102,6 @@ class TestDBDagBag:
 
     def test_get_dag_returns_none_when_model_missing(self):
         """It should return None if no SerializedDagModel found."""
-        with patch.object(self.db_dag_bag, "get_dag_model", return_value=None):
+        with patch.object(self.db_dag_bag, "get_serialized_dag_model", return_value=None):
             result = self.db_dag_bag.get_dag("v1", session=self.session)
         assert result is None
