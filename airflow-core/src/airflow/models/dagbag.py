@@ -55,6 +55,23 @@ class DBDagBag:
         return dag
 
     def get_serialized_dag_model(self, version_id: UUID, session: Session) -> SerializedDagModel | None:
+        """Return the SerializedDagModel for a given dag version id.
+
+        This will first consult the in-memory cache keyed by the dag version id. If the
+        model is not cached, the database is queried for a corresponding :class:`DagVersion`
+        and its associated :class:`SerializedDagModel`.
+
+        :param version_id: The UUID of the dag version to look up.
+        :param session: SQLAlchemy session used to query the database.
+        :return: The serialized DAG model if found either in the cache or the database; ``None``
+                 is returned when no :class:`DagVersion` exists for the given ``version_id`` or
+                 when that :class:`DagVersion` does not have an associated :class:`SerializedDagModel`.
+        :rtype: SerializedDagModel | None
+
+        Note: If a serialized dag model is found in the database it will be stored in the
+        internal cache (``self._dags``) before being returned.
+        """
+
         if not (serialized_dag_model := self._dags.get(version_id)):
             dag_version = session.get(DagVersion, version_id, options=[joinedload(DagVersion.serialized_dag)])
             if not dag_version or not (serialized_dag_model := dag_version.serialized_dag):
