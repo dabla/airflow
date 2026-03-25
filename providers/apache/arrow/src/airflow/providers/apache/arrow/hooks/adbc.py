@@ -108,7 +108,7 @@ class AdbcHook(DbApiHook):
 
     @cached_property
     def uri(self) -> str:
-        if "::" in self.connection.host:
+        if self.connection.host and "::" in self.connection.host:
             return self.connection.host
         uri = self.get_uri()
         return uri.replace(f"{self.conn_type.lower().replace('_', '-')}://", f"{self.dialect_name.lower().replace('_', '-')}://")
