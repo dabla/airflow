@@ -72,7 +72,6 @@ class DBDagBag:
         Note: If a serialized dag model is found in the database it will be stored in the
         internal cache (``self._dags``) before being returned.
         """
-
         if not (serialized_dag_model := self._dags.get(version_id)):
             dag_version = session.get(DagVersion, version_id, options=[joinedload(DagVersion.serialized_dag)])
             if not dag_version or not (serialized_dag_model := dag_version.serialized_dag):
