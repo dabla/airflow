@@ -24,11 +24,11 @@ import {
   UseDagRunServiceGetDagRunKeyFn,
   useDagRunServiceGetDagRunsKey,
   UseDagServiceGetDagDetailsKeyFn,
+  UseGanttServiceGetGanttDataKeyFn,
   useTaskInstanceServiceGetTaskInstancesKey,
   UseGridServiceGetGridRunsKeyFn,
-  UseGridServiceGetGridTiSummariesKeyFn,
 } from "openapi/queries";
-import { toaster } from "src/components/ui";
+import { createErrorToaster } from "src/utils";
 
 import { useClearDagRunDryRunKey } from "./useClearDagRunDryRun";
 
@@ -44,12 +44,15 @@ export const useClearDagRun = ({
   const queryClient = useQueryClient();
   const { t: translate } = useTranslation("dags");
 
-  const onError = (error: Error) => {
-    toaster.create({
-      description: error.message,
-      title: translate("dags:runAndTaskActions.clear.error", { type: translate("dagRun_one") }),
-      type: "error",
-    });
+  const onError = (error: unknown) => {
+    createErrorToaster(
+      error,
+      {
+        params: { type: translate("dagRun_one") },
+        titleKey: "dags:runAndTaskActions.clear.error",
+      },
+      translate,
+    );
   };
 
   const onSuccess = async () => {
@@ -60,7 +63,7 @@ export const useClearDagRun = ({
       [useDagRunServiceGetDagRunsKey],
       [useClearDagRunDryRunKey, dagId],
       UseGridServiceGetGridRunsKeyFn({ dagId }, [{ dagId }]),
-      UseGridServiceGetGridTiSummariesKeyFn({ dagId, runId: dagRunId }, [{ dagId, runId: dagRunId }]),
+      UseGanttServiceGetGanttDataKeyFn({ dagId, runId: dagRunId }),
     ];
 
     await Promise.all(queryKeys.map((key) => queryClient.invalidateQueries({ queryKey: key })));

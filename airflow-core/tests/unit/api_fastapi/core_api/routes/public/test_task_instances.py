@@ -39,13 +39,15 @@ from airflow.models.renderedtifields import RenderedTaskInstanceFields as RTIF
 from airflow.models.taskinstancehistory import TaskInstanceHistory
 from airflow.models.taskmap import TaskMap
 from airflow.models.trigger import Trigger
-from airflow.sdk import BaseOperator
+from airflow.providers.standard.operators.empty import EmptyOperator
+from airflow.sdk import BaseOperator, TaskGroup
 from airflow.utils.platform import getuser
 from airflow.utils.state import DagRunState, State, TaskInstanceState
 from airflow.utils.types import DagRunType
 
 from tests_common.test_utils.api_fastapi import _check_task_instance_note
 from tests_common.test_utils.asserts import assert_queries_count
+from tests_common.test_utils.config import conf_vars
 from tests_common.test_utils.db import (
     clear_db_runs,
     clear_rendered_ti_fields,
@@ -214,7 +216,7 @@ class TestGetTaskInstance(TestTaskInstanceEndpoint):
             "pid": 100,
             "pool": "default_pool",
             "pool_slots": 1,
-            "priority_weight": 9,
+            "priority_weight": 14,
             "queue": "default_queue",
             "queued_when": None,
             "scheduled_when": None,
@@ -372,7 +374,7 @@ class TestGetTaskInstance(TestTaskInstanceEndpoint):
             "pid": 100,
             "pool": "default_pool",
             "pool_slots": 1,
-            "priority_weight": 9,
+            "priority_weight": 14,
             "queue": "default_queue",
             "queued_when": None,
             "scheduled_when": None,
@@ -436,7 +438,7 @@ class TestGetTaskInstance(TestTaskInstanceEndpoint):
             "pid": 100,
             "pool": "default_pool",
             "pool_slots": 1,
-            "priority_weight": 9,
+            "priority_weight": 14,
             "queue": "default_queue",
             "queued_when": None,
             "scheduled_when": None,
@@ -492,7 +494,7 @@ class TestGetTaskInstance(TestTaskInstanceEndpoint):
             "pid": 100,
             "pool": "default_pool",
             "pool_slots": 1,
-            "priority_weight": 9,
+            "priority_weight": 14,
             "queue": "default_queue",
             "queued_when": None,
             "scheduled_when": None,
@@ -612,7 +614,7 @@ class TestGetMappedTaskInstance(TestTaskInstanceEndpoint):
                 "pid": 100,
                 "pool": "default_pool",
                 "pool_slots": 1,
-                "priority_weight": 9,
+                "priority_weight": 14,
                 "queue": "default_queue",
                 "queued_when": None,
                 "scheduled_when": None,
@@ -833,8 +835,8 @@ class TestGetMappedTaskInstances:
             ({"order_by": "map_index", "limit": 100}, list(range(100))),
             ({"order_by": "-map_index", "limit": 100}, list(range(109, 9, -1))),
             (
-                {"order_by": "state", "limit": 108},
-                list(range(5, 25)) + list(range(25, 110)) + list(range(3)),
+                {"order_by": "state", "limit": 108},  # Maximum page limit will limit result to 100 items.
+                list(range(5, 25)) + list(range(25, 105)),
             ),
             (
                 {"order_by": "-state", "limit": 100},
@@ -849,6 +851,8 @@ class TestGetMappedTaskInstances:
     def test_mapped_instances_order(
         self, test_client, session, params, expected_map_indexes, one_task_with_many_mapped_tis
     ):
+        from airflow.configuration import conf
+
         with assert_queries_count(4):
             response = test_client.get(
                 "/dags/mapped_tis/dagRuns/run_mapped_tis/taskInstances/task_2/listMapped",
@@ -858,7 +862,7 @@ class TestGetMappedTaskInstances:
         assert response.status_code == 200
         body = response.json()
         assert body["total_entries"] == 110
-        assert len(body["task_instances"]) == params["limit"]
+        assert len(body["task_instances"]) == min(params["limit"], conf.getint("api", "maximum_page_limit"))
         assert expected_map_indexes == [ti["map_index"] for ti in body["task_instances"]]
 
     # Ordering of nulls values is DB specific.
@@ -870,6 +874,7 @@ class TestGetMappedTaskInstances:
             ({"order_by": "-rendered_map_index", "limit": 100}, [0] + list(range(11, 110)[::-1])),  # Desc
         ],
     )
+    @conf_vars({("api", "maximum_page_limit"): "110"})
     def test_rendered_map_index_order(
         self, test_client, session, params, expected_map_indexes, one_task_with_many_mapped_tis
     ):
@@ -979,6 +984,36 @@ class TestGetMappedTaskInstances:
         )
         assert response.status_code == 404
         assert response.json()["detail"] == "Task id nonexistent_task not found"
+
+    def test_no_duplicate_joins_in_get_mapped_task_instances_query(
+        self, one_task_with_mapped_tis, test_client
+    ):
+        """Regression test for #62027: the get_mapped_task_instances endpoint must not emit duplicate JOINs."""
+        from sqlalchemy import event
+
+        import airflow.settings
+
+        executed_statements: list[str] = []
+
+        def capture(_conn, _cursor, statement, _parameters, _context, _executemany):
+            executed_statements.append(statement.upper())
+
+        event.listen(airflow.settings.engine, "before_cursor_execute", capture)
+        try:
+            response = test_client.get(
+                "/dags/mapped_tis/dagRuns/run_mapped_tis/taskInstances/task_2/listMapped",
+            )
+        finally:
+            event.remove(airflow.settings.engine, "before_cursor_execute", capture)
+
+        assert response.status_code == 200
+
+        ti_queries = [s for s in executed_statements if "FROM TASK_INSTANCE" in s and "JOIN DAG_RUN" in s]
+        assert ti_queries, "Expected at least one query selecting from task_instance with JOIN dag_run"
+        for q in ti_queries:
+            assert q.count("JOIN DAG_RUN") == 1, "dag_run must appear exactly once in JOINs"
+            if "JOIN DAG_VERSION" in q:
+                assert q.count("JOIN DAG_VERSION") == 1, "dag_version must appear exactly once in JOINs"
 
 
 class TestGetTaskInstances(TestTaskInstanceEndpoint):
@@ -1404,7 +1439,7 @@ class TestGetTaskInstances(TestTaskInstanceEndpoint):
                 False,
                 "/dags/~/dagRuns/~/taskInstances",
                 {"dag_id_pattern": "example_python_operator"},
-                9,  # Based on test failure - example_python_operator creates 9 task instances
+                14,  # Based on test failure - example_python_operator creates 14 task instances
                 3,
                 id="test dag_id_pattern exact match",
             ),
@@ -1413,7 +1448,7 @@ class TestGetTaskInstances(TestTaskInstanceEndpoint):
                 False,
                 "/dags/~/dagRuns/~/taskInstances",
                 {"dag_id_pattern": "example_%"},
-                17,  # Based on test failure - both DAGs together create 17 task instances
+                22,  # Based on test failure - both DAGs together create 22 task instances
                 3,
                 id="test dag_id_pattern wildcard prefix",
             ),
@@ -1495,9 +1530,11 @@ class TestGetTaskInstances(TestTaskInstanceEndpoint):
         assert response.status_code == 404
         assert response.json() == {"detail": "The Dag with ID: `invalid` was not found"}
 
-        response = test_client.get("/dags/~/dagRuns/invalid/taskInstances")
-        assert response.status_code == 404
-        assert response.json() == {"detail": "DagRun with run_id: `invalid` was not found"}
+    def test_dag_id_required_when_dag_run_id_specified(self, test_client):
+        # dag_run_id is not unique - it requires dag_id to identify a specific dag_run
+        response = test_client.get("/dags/~/dagRuns/some_run_id/taskInstances")
+        assert response.status_code == 400
+        assert response.json() == {"detail": "dag_id is required when dag_run_id is specified"}
 
     def test_bad_state(self, test_client):
         response = test_client.get("/dags/~/dagRuns/~/taskInstances", params={"state": "invalid"})
@@ -1506,6 +1543,41 @@ class TestGetTaskInstances(TestTaskInstanceEndpoint):
             response.json()["detail"]
             == f"Invalid value for state. Valid values are {', '.join(TaskInstanceState)}"
         )
+
+    def test_no_duplicate_joins_in_get_task_instances_query(self, test_client, session):
+        """Regression test for #62027: the get_task_instances endpoint must not emit duplicate JOINs.
+
+        Combining explicit join() with joinedload() on the same tables causes SQLAlchemy
+        to emit duplicate JOINs (dag_run twice, dag_version twice). By relying solely on
+        joinedload via eager_load_TI_and_TIH_for_validation, each table must appear
+        exactly once in the SQL emitted by the real endpoint.
+        """
+        from sqlalchemy import event
+
+        import airflow.settings
+
+        self.create_task_instances(session)
+
+        executed_statements: list[str] = []
+
+        def capture(_conn, _cursor, statement, _parameters, _context, _executemany):
+            executed_statements.append(statement.upper())
+
+        event.listen(airflow.settings.engine, "before_cursor_execute", capture)
+        try:
+            response = test_client.get("/dags/~/dagRuns/~/taskInstances")
+        finally:
+            event.remove(airflow.settings.engine, "before_cursor_execute", capture)
+
+        assert response.status_code == 200
+
+        # Find all statements that query task_instance joined with dag_run
+        ti_queries = [s for s in executed_statements if "FROM TASK_INSTANCE" in s and "JOIN DAG_RUN" in s]
+        assert ti_queries, "Expected at least one query selecting from task_instance with JOIN dag_run"
+        for q in ti_queries:
+            assert q.count("JOIN DAG_RUN") == 1, "dag_run must appear exactly once in JOINs"
+            if "JOIN DAG_VERSION" in q:
+                assert q.count("JOIN DAG_VERSION") == 1, "dag_version must appear exactly once in JOINs"
 
     def test_return_TI_only_from_readable_dags(self, test_client, session):
         task_instances = {
@@ -1639,6 +1711,47 @@ class TestGetTaskInstances(TestTaskInstanceEndpoint):
         assert response_batch1.json()["total_entries"] == response_batch2.json()["total_entries"] == ti_count
         assert (num_entries_batch1 + num_entries_batch2) == ti_count
         assert response_batch1 != response_batch2
+
+    def test_task_group_filter_uses_run_version_not_latest(self, test_client, dag_maker, session):
+        """
+        Task group lookup should use the DAG version from the run, not the latest version.
+
+        When a task group is renamed between versions, clicking on a historical run's
+        task group in the grid should still resolve correctly against the version
+        that run was created with — not the latest version where the group may have
+        a different name, i.e serialized_dag might not have that taskgroup anymore.
+        """
+        dag_id = "test_tg_version"
+
+        # Version 1: task group named "process_data"
+        with dag_maker(dag_id, session=session):
+            with TaskGroup(group_id="process_data"):
+                EmptyOperator(task_id="step_1")
+        dag_maker.create_dagrun(run_id="run_v1")
+        session.commit()
+
+        # Version 2: task group renamed to "process_data_v2"
+        with dag_maker(dag_id, session=session):
+            with TaskGroup(group_id="process_data_v2"):
+                EmptyOperator(task_id="step_1")
+        session.commit()
+
+        # The run was created with v1 which had "process_data".
+        # Querying with the old group name must succeed.
+        response = test_client.get(
+            f"/dags/{dag_id}/dagRuns/run_v1/taskInstances",
+            params={"task_group_id": "process_data"},
+        )
+        assert response.status_code == 200, response.json()
+        assert response.json()["total_entries"] == 1
+        assert response.json()["task_instances"][0]["task_id"] == "process_data.step_1"
+
+        # The new group name should NOT be found in the old run's version.
+        response = test_client.get(
+            f"/dags/{dag_id}/dagRuns/run_v1/taskInstances",
+            params={"task_group_id": "process_data_v2"},
+        )
+        assert response.status_code == 404
 
 
 class TestGetTaskDependencies(TestTaskInstanceEndpoint):
@@ -1927,8 +2040,8 @@ class TestGetTaskInstancesBatch(TestTaskInstanceEndpoint):
         [
             pytest.param(
                 {"dag_ids": ["example_python_operator", "example_skip_dag"]},
-                17,
-                17,
+                22,
+                22,
                 id="with dag filter",
             ),
         ],
@@ -2037,7 +2150,7 @@ class TestGetTaskInstancesBatch(TestTaskInstanceEndpoint):
         assert len(response_batch2.json()["task_instances"]) > 0
 
         # Match
-        ti_count = 9
+        ti_count = 10
         assert response_batch1.json()["total_entries"] == response_batch2.json()["total_entries"] == ti_count
         assert (num_entries_batch1 + num_entries_batch2) == ti_count
         assert response_batch1 != response_batch2
@@ -2051,6 +2164,34 @@ class TestGetTaskInstancesBatch(TestTaskInstanceEndpoint):
         num_entries_batch3 = len(response_batch3.json()["task_instances"])
         assert num_entries_batch3 == ti_count
         assert len(response_batch3.json()["task_instances"]) == ti_count
+
+    def test_no_duplicate_joins_in_get_task_instances_batch_query(self, test_client, session):
+        """Regression test for #62027: the get_task_instances_batch endpoint must not emit duplicate JOINs."""
+        from sqlalchemy import event
+
+        import airflow.settings
+
+        self.create_task_instances(session)
+
+        executed_statements: list[str] = []
+
+        def capture(_conn, _cursor, statement, _parameters, _context, _executemany):
+            executed_statements.append(statement.upper())
+
+        event.listen(airflow.settings.engine, "before_cursor_execute", capture)
+        try:
+            response = test_client.post("/dags/~/dagRuns/~/taskInstances/list", json={})
+        finally:
+            event.remove(airflow.settings.engine, "before_cursor_execute", capture)
+
+        assert response.status_code == 200
+
+        ti_queries = [s for s in executed_statements if "FROM TASK_INSTANCE" in s and "JOIN DAG_RUN" in s]
+        assert ti_queries, "Expected at least one query selecting from task_instance with JOIN dag_run"
+        for q in ti_queries:
+            assert q.count("JOIN DAG_RUN") == 1, "dag_run must appear exactly once in JOINs"
+            if "JOIN DAG_VERSION" in q:
+                assert q.count("JOIN DAG_VERSION") == 1, "dag_version must appear exactly once in JOINs"
 
 
 class TestGetTaskInstanceTry(TestTaskInstanceEndpoint):
@@ -2076,7 +2217,7 @@ class TestGetTaskInstanceTry(TestTaskInstanceEndpoint):
             "pid": 100,
             "pool": "default_pool",
             "pool_slots": 1,
-            "priority_weight": 9,
+            "priority_weight": 14,
             "queue": "default_queue",
             "queued_when": None,
             "scheduled_when": None,
@@ -2122,7 +2263,7 @@ class TestGetTaskInstanceTry(TestTaskInstanceEndpoint):
             "pid": 100,
             "pool": "default_pool",
             "pool_slots": 1,
-            "priority_weight": 9,
+            "priority_weight": 14,
             "queue": "default_queue",
             "queued_when": None,
             "scheduled_when": None,
@@ -2199,7 +2340,7 @@ class TestGetTaskInstanceTry(TestTaskInstanceEndpoint):
                 "pid": 100,
                 "pool": "default_pool",
                 "pool_slots": 1,
-                "priority_weight": 9,
+                "priority_weight": 14,
                 "queue": "default_queue",
                 "queued_when": None,
                 "scheduled_when": None,
@@ -2271,7 +2412,7 @@ class TestGetTaskInstanceTry(TestTaskInstanceEndpoint):
             "pid": 100,
             "pool": "default_pool",
             "pool_slots": 1,
-            "priority_weight": 9,
+            "priority_weight": 14,
             "queue": "default_queue",
             "queued_when": None,
             "scheduled_when": None,
@@ -2318,7 +2459,7 @@ class TestGetTaskInstanceTry(TestTaskInstanceEndpoint):
             "pid": 100,
             "pool": "default_pool",
             "pool_slots": 1,
-            "priority_weight": 9,
+            "priority_weight": 14,
             "queue": "default_queue",
             "queued_when": None,
             "scheduled_when": None,
@@ -3162,7 +3303,7 @@ class TestPostClearTaskInstances(TestTaskInstanceEndpoint):
                 "pid": 100,
                 "pool": "default_pool",
                 "pool_slots": 1,
-                "priority_weight": 9,
+                "priority_weight": 14,
                 "queue": "default_queue",
                 "queued_when": None,
                 "scheduled_when": None,
@@ -3534,7 +3675,7 @@ class TestGetTaskInstanceTries(TestTaskInstanceEndpoint):
                     "pid": 100,
                     "pool": "default_pool",
                     "pool_slots": 1,
-                    "priority_weight": 9,
+                    "priority_weight": 14,
                     "queue": "default_queue",
                     "queued_when": None,
                     "scheduled_when": None,
@@ -3571,7 +3712,7 @@ class TestGetTaskInstanceTries(TestTaskInstanceEndpoint):
                     "pid": 100,
                     "pool": "default_pool",
                     "pool_slots": 1,
-                    "priority_weight": 9,
+                    "priority_weight": 14,
                     "queue": "default_queue",
                     "queued_when": None,
                     "scheduled_when": None,
@@ -3642,7 +3783,7 @@ class TestGetTaskInstanceTries(TestTaskInstanceEndpoint):
                     "pid": 100,
                     "pool": "default_pool",
                     "pool_slots": 1,
-                    "priority_weight": 9,
+                    "priority_weight": 14,
                     "queue": "default_queue",
                     "queued_when": None,
                     "scheduled_when": None,
@@ -3725,7 +3866,7 @@ class TestGetTaskInstanceTries(TestTaskInstanceEndpoint):
                         "pid": 100,
                         "pool": "default_pool",
                         "pool_slots": 1,
-                        "priority_weight": 9,
+                        "priority_weight": 14,
                         "queue": "default_queue",
                         "queued_when": None,
                         "scheduled_when": None,
@@ -3762,7 +3903,7 @@ class TestGetTaskInstanceTries(TestTaskInstanceEndpoint):
                         "pid": 100,
                         "pool": "default_pool",
                         "pool_slots": 1,
-                        "priority_weight": 9,
+                        "priority_weight": 14,
                         "queue": "default_queue",
                         "queued_when": None,
                         "scheduled_when": None,
@@ -3924,7 +4065,8 @@ class TestPatchTaskInstance(TestTaskInstanceEndpoint):
         [
             ("success", [TaskInstanceState.SUCCESS]),
             ("failed", [TaskInstanceState.FAILED]),
-            ("skipped", []),
+            ("skipped", [TaskInstanceState.SKIPPED]),
+            ("running", []),
         ],
     )
     def test_patch_task_instance_notifies_listeners(
@@ -4001,7 +4143,7 @@ class TestPatchTaskInstance(TestTaskInstanceEndpoint):
                     "pid": 100,
                     "pool": "default_pool",
                     "pool_slots": 1,
-                    "priority_weight": 9,
+                    "priority_weight": 14,
                     "queue": "default_queue",
                     "queued_when": None,
                     "scheduled_when": None,
@@ -4275,7 +4417,7 @@ class TestPatchTaskInstance(TestTaskInstanceEndpoint):
                             "pid": 100,
                             "pool": "default_pool",
                             "pool_slots": 1,
-                            "priority_weight": 9,
+                            "priority_weight": 14,
                             "queue": "default_queue",
                             "queued_when": None,
                             "scheduled_when": None,
@@ -4409,7 +4551,7 @@ class TestPatchTaskInstance(TestTaskInstanceEndpoint):
                     "pid": 100,
                     "pool": "default_pool",
                     "pool_slots": 1,
-                    "priority_weight": 9,
+                    "priority_weight": 14,
                     "queue": "default_queue",
                     "queued_when": None,
                     "scheduled_when": None,
@@ -4470,7 +4612,7 @@ class TestPatchTaskInstance(TestTaskInstanceEndpoint):
                     "pid": 100,
                     "pool": "default_pool",
                     "pool_slots": 1,
-                    "priority_weight": 9,
+                    "priority_weight": 14,
                     "queue": "default_queue",
                     "queued_when": None,
                     "scheduled_when": None,
@@ -4549,7 +4691,7 @@ class TestPatchTaskInstance(TestTaskInstanceEndpoint):
                         "pid": 100,
                         "pool": "default_pool",
                         "pool_slots": 1,
-                        "priority_weight": 9,
+                        "priority_weight": 14,
                         "queue": "default_queue",
                         "queued_when": None,
                         "scheduled_when": None,
@@ -4630,7 +4772,7 @@ class TestPatchTaskInstance(TestTaskInstanceEndpoint):
                 "pid": 100,
                 "pool": "default_pool",
                 "pool_slots": 1,
-                "priority_weight": 9,
+                "priority_weight": 14,
                 "queue": "default_queue",
                 "queued_when": None,
                 "scheduled_when": None,
@@ -4748,7 +4890,7 @@ class TestPatchTaskInstanceDryRun(TestTaskInstanceEndpoint):
                     "pid": 100,
                     "pool": "default_pool",
                     "pool_slots": 1,
-                    "priority_weight": 9,
+                    "priority_weight": 14,
                     "queue": "default_queue",
                     "queued_when": None,
                     "scheduled_when": None,
@@ -5034,7 +5176,7 @@ class TestPatchTaskInstanceDryRun(TestTaskInstanceEndpoint):
                             "pid": 100,
                             "pool": "default_pool",
                             "pool_slots": 1,
-                            "priority_weight": 9,
+                            "priority_weight": 14,
                             "queue": "default_queue",
                             "queued_when": None,
                             "scheduled_when": None,

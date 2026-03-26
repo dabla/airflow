@@ -26,7 +26,7 @@ from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import Integer, String, Text, delete, exists, func, or_, select, update
 from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.orm import Mapped, Session, relationship, selectinload
+from sqlalchemy.orm import Mapped, Session, mapped_column, relationship, selectinload
 from sqlalchemy.sql.functions import coalesce
 
 from airflow._shared.timezones import timezone
@@ -39,7 +39,7 @@ from airflow.models.taskinstance import TaskInstance
 from airflow.triggers.base import BaseTaskEndEvent
 from airflow.utils.retries import run_with_db_retries
 from airflow.utils.session import NEW_SESSION, provide_session
-from airflow.utils.sqlalchemy import UtcDateTime, get_dialect_name, mapped_column, with_row_locks
+from airflow.utils.sqlalchemy import UtcDateTime, get_dialect_name, with_row_locks
 from airflow.utils.state import State, TaskInstanceState
 
 if TYPE_CHECKING:
@@ -225,7 +225,7 @@ class Trigger(Base):
         Triggers have a one-to-many relationship to task instances, so we need to clean those up first.
         Afterward we can drop the triggers not referenced by anyone.
         """
-        # TODO: should be moved into dedicated method
+        # TODO: AIP-88 should be moved into dedicated method called clean_finished
         if finished_triggers:
             session.execute(
                 update(TaskInstance)
@@ -274,7 +274,11 @@ class Trigger(Base):
     @classmethod
     @provide_session
     def submit_event(
-        cls, trigger_id, event: TriggerEvent, is_last_event: bool = True, session: Session = NEW_SESSION
+        cls,
+        trigger_id,
+        event: TriggerEvent,
+        is_last_event: bool = True,
+        session: Session = NEW_SESSION,
     ) -> bool:
         """
         Fire an event.
@@ -282,7 +286,6 @@ class Trigger(Base):
         Resume all tasks that were in deferred state.
         Send an event to all assets associated to the trigger.
         """
-        # Resume deferred tasks
         task_instances = session.scalars(
             select(TaskInstance).where(
                 or_(
@@ -290,10 +293,14 @@ class Trigger(Base):
                     TaskInstance.next_trigger_id == trigger_id,
                     # We need to do this as once we run the next_method, trigger_id is removed from TaskInstance
                 ),
-                TaskInstance.state.in_([TaskInstanceState.DEFERRED, TaskInstanceState.SUCCESS]),
+                TaskInstance.state.in_(
+                    [TaskInstanceState.DEFERRED, TaskInstanceState.SUCCESS]
+                ),
                 # TODO: SUCCESS might become COMPLETED
             )
         ).all()
+
+        log.info("task_instances: %d", len(task_instances))
 
         if task_instances:
             log.info("Handle event for trigger %s", trigger_id)
@@ -307,14 +314,30 @@ class Trigger(Base):
                     is_last_event=is_last_event,
                     session=session,
                 )
+        else:
+            log.debug(
+                "No more task instances found for trigger %s! Stop processing events for trigger %s",
+                trigger_id,
+                trigger_id,
+            )
 
-            # Send an event to assets
-            trigger = session.scalars(
-                select(Trigger).options(selectinload(Trigger.assets)).where(Trigger.id == trigger_id)
-            ).one_or_none()
-            if not trigger:
-                # Already deleted for some reason
-                return False
+        # Send an event to assets
+        trigger = session.scalars(
+            select(Trigger)
+            .options(selectinload(Trigger.assets))
+            .where(Trigger.id == trigger_id)
+        ).one_or_none()
+
+        log.info(
+            "We should register asset changes for trigger_id %s for event %s",
+            trigger_id,
+            event,
+        )
+
+        if not trigger:
+            # TODO: check why Trigger disappears after first handled event, we need to FIX this
+            log.warning("Trigger %s was not found.", trigger_id)
+        else:
             for asset in trigger.assets:
                 AssetManager.register_asset_change(
                     asset=asset.to_public(),
@@ -323,14 +346,8 @@ class Trigger(Base):
                 )
             if trigger.callback:
                 trigger.callback.handle_event(event, session)
-            return True
 
-        log.debug(
-            "No more task instances found for trigger %s! Stop processing events for trigger %s",
-            trigger_id,
-            trigger_id,
-        )
-        return False
+        return True if task_instances else False
 
     @classmethod
     @provide_session
@@ -594,13 +611,7 @@ def handle_event_submit(
 
 
 @handle_event_submit.register
-def _(
-    event: BaseTaskEndEvent,
-    *,
-    task_instance: TaskInstance,
-    session: Session,
-    **_: Any,
-) -> None:
+def _(event: BaseTaskEndEvent, *, task_instance: TaskInstance, session: Session) -> None:
     """
     Submit event for the given task instance.
 
