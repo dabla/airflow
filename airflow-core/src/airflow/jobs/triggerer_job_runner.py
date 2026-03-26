@@ -1370,7 +1370,7 @@ class TriggerRunner:
                         raise
                 span.set_status(Status(StatusCode.OK), description=str(e))
                 raise
-            except Exception:
+            except Exception as e:
                 await self.log.aexception("trigger %s failed", trigger_id)
                 # We serialize the trigger first before raising the exception, so that when the trigger is retryable,
                 # we can resume from the point where it failed when the scheduler recreates the trigger.
