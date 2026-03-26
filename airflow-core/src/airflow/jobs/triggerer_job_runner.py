@@ -51,8 +51,8 @@ from airflow.executors import workloads
 from airflow.executors.workloads.task import TaskInstanceDTO
 from airflow.jobs.base_job_runner import BaseJobRunner
 from airflow.jobs.job import perform_heartbeat
-from airflow.models.dagbag import DBDagBag
 from airflow.jobs.queues import KeyedHeadQueue, PartitionedQueue
+from airflow.models.dagbag import DBDagBag
 from airflow.models.trigger import Trigger
 from airflow.observability.metrics import stats_utils
 from airflow.sdk.api.datamodels._generated import HITLDetailResponse
@@ -415,9 +415,7 @@ class TriggerRunnerSupervisor(WatchedSubprocess):
     creating_triggers: deque[workloads.RunTrigger] = attrs.field(factory=deque, init=False)
 
     # Outbound queue of events
-    events: KeyedHeadQueue[int, tuple[int, TriggerEvent]] = attrs.field(
-        factory=KeyedHeadQueue, init=False
-    )
+    events: KeyedHeadQueue[int, tuple[int, TriggerEvent]] = attrs.field(factory=KeyedHeadQueue, init=False)
 
     # Outbound queue of failed triggers
     failed_triggers: KeyedHeadQueue[int, tuple[int, tuple[str, dict[str, Any]] | None, list[str] | None]] = (

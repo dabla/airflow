@@ -293,9 +293,7 @@ class Trigger(Base):
                     TaskInstance.next_trigger_id == trigger_id,
                     # We need to do this as once we run the next_method, trigger_id is removed from TaskInstance
                 ),
-                TaskInstance.state.in_(
-                    [TaskInstanceState.DEFERRED, TaskInstanceState.SUCCESS]
-                ),
+                TaskInstance.state.in_([TaskInstanceState.DEFERRED, TaskInstanceState.SUCCESS]),
                 # TODO: SUCCESS might become COMPLETED
             )
         ).all()
@@ -322,11 +320,7 @@ class Trigger(Base):
             )
 
         # Send an event to assets
-        trigger = session.scalars(
-            select(Trigger)
-            .options(selectinload(Trigger.assets))
-            .where(Trigger.id == trigger_id)
-        ).one_or_none()
+        trigger = session.scalars(select(cls).where(cls.id == trigger_id)).one_or_none()
 
         log.info(
             "We should register asset changes for trigger_id %s for event %s",
