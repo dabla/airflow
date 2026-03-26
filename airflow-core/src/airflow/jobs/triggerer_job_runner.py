@@ -1227,7 +1227,7 @@ class TriggerRunner:
     def process_trigger_events(self, finished_ids: list[int]) -> messages.TriggerStateChanges:
         # Copy out of our dequeues in threadsafe manner to sync state with parent
         events_to_send: list[tuple[int, DiscrimatedTriggerEvent]] = []
-        failures_to_send: list[tuple[int, list[str] | None]] = []
+        failures_to_send: list[tuple[int, tuple[str, dict[str, Any]] | None, list[str] | None]] = []
 
         while self.events:
             trigger_id, trigger_event = self.events.popleft()
@@ -1258,7 +1258,7 @@ class TriggerRunner:
                         trigger_id,
                         trigger_event,
                     )
-                    self.failed_triggers.append((trigger_id, e))
+                    self.failed_triggers.append((trigger_id, None, e))
                 else:
                     events_to_send.append((trigger_id, trigger_event))
 
