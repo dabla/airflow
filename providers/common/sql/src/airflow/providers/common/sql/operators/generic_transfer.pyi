@@ -55,6 +55,7 @@ class GenericTransfer(BaseOperator):
     preoperator: Incomplete
     insert_args: Incomplete
     page_size: Incomplete
+    deferrable: bool
     def __init__(
         self,
         *,
@@ -68,6 +69,7 @@ class GenericTransfer(BaseOperator):
         preoperator: str | list[str] | None = None,
         insert_args: dict | None = None,
         page_size: int | None = None,
+        deferrable: bool = False,
         **kwargs,
     ) -> None: ...
     @classmethod
