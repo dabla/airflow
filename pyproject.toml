@@ -104,7 +104,7 @@ packages = []
     "apache-airflow-providers-amazon>=9.0.0"
 ]
 "apache.arrow" = [
-    "apache-airflow-providers-apache-arrow>=0.1.0", # Set from local provider pyproject.toml
+    "apache-airflow-providers-apache-arrow>=0.1.0" # Set from local provider pyproject.toml
 ]
 "apache.cassandra" = [
     "apache-airflow-providers-apache-cassandra>=3.7.0; python_version !=\"3.14\""
