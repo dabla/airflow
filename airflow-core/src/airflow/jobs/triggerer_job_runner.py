@@ -1041,7 +1041,9 @@ class TriggerRunner:
             raise RuntimeError(f"Required first message to be a messages.StartTriggerer, it was {msg}")
 
     @classmethod
-    def create_runtime_ti(cls, task_instance: TaskInstanceDTO, encoded_dag: dict, dag_run_data: dict) -> RuntimeTaskInstance:
+    def create_runtime_ti(
+        cls, task_instance: TaskInstanceDTO, encoded_dag: dict, dag_run_data: dict
+    ) -> RuntimeTaskInstance:
         from airflow.api_fastapi.execution_api.datamodels.taskinstance import DagRun as DRDataModel
         from airflow.sdk.api.datamodels._generated import TIRunContext
 
