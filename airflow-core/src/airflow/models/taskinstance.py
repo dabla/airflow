@@ -1637,6 +1637,7 @@ class TaskInstance(Base, LoggingMixin, BaseWorkload):
             # Then, update ourselves so it matches the deferral request
             # Keep an eye on the logic in `check_and_change_state_before_execution()`
             # depending on self.next_method semantics
+            pre_deferral_state = self.state
             self.state = TaskInstanceState.DEFERRED
             self.trigger_id = trigger_row.id
             self.next_method = start_trigger_args.next_method
@@ -1650,7 +1651,7 @@ class TaskInstance(Base, LoggingMixin, BaseWorkload):
                 else:
                     self.trigger_timeout = self.start_date + execution_timeout
             self.start_date = timezone.utcnow()
-            if self.state != TaskInstanceState.UP_FOR_RESCHEDULE:
+            if pre_deferral_state != TaskInstanceState.UP_FOR_RESCHEDULE:
                 self.try_number += 1
             if self.test_mode:
                 _add_log(event=self.state, task_instance=self, session=session)
