@@ -2754,10 +2754,17 @@ def test_defer_task_with_trigger_timeout(create_task_instance):
     ("initial_state", "initial_try_number", "expected_try_number", "msg"),
     [
         (TaskInstanceState.DEFERRED, 1, 2, "try_number should increment if state is not UP_FOR_RESCHEDULE"),
-        (TaskInstanceState.UP_FOR_RESCHEDULE, 5, 5, "try_number should NOT increment if state is UP_FOR_RESCHEDULE"),
+        (
+            TaskInstanceState.UP_FOR_RESCHEDULE,
+            5,
+            5,
+            "try_number should NOT increment if state is UP_FOR_RESCHEDULE",
+        ),
     ],
 )
-def test_defer_task_try_number_increment_on_state(create_task_instance, initial_state, initial_try_number, expected_try_number, msg):
+def test_defer_task_try_number_increment_on_state(
+    create_task_instance, initial_state, initial_try_number, expected_try_number, msg
+):
     """
     Test that defer_task increments try_number only if the pre-deferral state is not UP_FOR_RESCHEDULE.
     """
