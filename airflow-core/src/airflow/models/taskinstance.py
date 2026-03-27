@@ -1642,6 +1642,7 @@ class TaskInstance(Base, LoggingMixin, BaseWorkload):
             self.trigger_id = trigger_row.id
             self.next_method = start_trigger_args.next_method
             self.next_kwargs = start_trigger_args.next_kwargs or {}
+            self.start_date = timezone.utcnow()
 
             # If an execution_timeout is set, set the timeout to the minimum of
             # it and the trigger timeout
@@ -1650,7 +1651,6 @@ class TaskInstance(Base, LoggingMixin, BaseWorkload):
                     self.trigger_timeout = min(self.start_date + execution_timeout, self.trigger_timeout)
                 else:
                     self.trigger_timeout = self.start_date + execution_timeout
-            self.start_date = timezone.utcnow()
             if pre_deferral_state != TaskInstanceState.UP_FOR_RESCHEDULE:
                 self.try_number += 1
             if self.test_mode:
