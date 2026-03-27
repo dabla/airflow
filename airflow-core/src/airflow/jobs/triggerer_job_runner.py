@@ -705,6 +705,7 @@ class TriggerRunnerSupervisor(WatchedSubprocess):
             # it means we need to load the SerializedDagModel so we can build a RuntimeTaskInstance later on which
             # will allow us to build a context on which we will render the templated fields.
             if task.start_from_trigger:
+                log.info("Start from trigger enabled for task %s", task.task_id)
                 dag_run = trigger.task_instance.get_dagrun(session=session)
 
                 return workloads.RunTrigger(
