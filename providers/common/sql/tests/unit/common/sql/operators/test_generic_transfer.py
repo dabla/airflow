@@ -25,7 +25,6 @@ from unittest.mock import MagicMock
 
 import pytest
 from more_itertools import flatten
-from sqlalchemy.orm import deferred
 
 from airflow.exceptions import AirflowProviderDeprecationWarning
 from airflow.models.connection import Connection
