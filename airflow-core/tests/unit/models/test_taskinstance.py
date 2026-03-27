@@ -2769,6 +2769,7 @@ def test_defer_task_try_number_increment_on_state(
     Test that defer_task increments try_number only if the pre-deferral state is not UP_FOR_RESCHEDULE.
     """
     from airflow.triggers.base import StartTriggerArgs
+
     session = mock.MagicMock()
 
     ti = create_task_instance(
