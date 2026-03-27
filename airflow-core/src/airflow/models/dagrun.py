@@ -1378,7 +1378,6 @@ class DagRun(Base, LoggingMixin):
     ):
         """Only needed for `dag.test` where `execute_callbacks=True` is passed to `update_state`."""
         from airflow.api_fastapi.execution_api.datamodels.taskinstance import (
-            DagRun as DRDataModel,
             TaskInstance as TIDataModel,
             TIRunContext,
         )
