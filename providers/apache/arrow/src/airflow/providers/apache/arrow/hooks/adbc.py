@@ -112,8 +112,8 @@ class AdbcHook(DbApiHook):
             return self.connection.host
         uri = self.get_uri()
         return uri.replace(
-        f"{self.conn_type.lower().replace('_', '-')}://",
-        f"{self.dialect_name.lower().replace('_', '-')}://",
+            f"{self.conn_type.lower().replace('_', '-')}://",
+            f"{self.dialect_name.lower().replace('_', '-')}://",
         )
 
     @cached_property
