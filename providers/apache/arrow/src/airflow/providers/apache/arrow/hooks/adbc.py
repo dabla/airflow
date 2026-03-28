@@ -18,7 +18,6 @@
 from __future__ import annotations
 
 import contextlib
-import functools
 import re
 from collections.abc import Iterable, Mapping
 from contextlib import closing
@@ -47,7 +46,8 @@ def fetch_all_handler(cursor) -> list[tuple] | None:
 
 def replace_placeholders(sql: str, placeholder: str) -> str:
     # Replace each placeholder with $1, $2, $3 ... in order
-    def replacer(match, counter=[1]):
+    counter = [1]
+    def replacer(match):
         replacement = f"${counter[0]}"
         counter[0] += 1
         return replacement
@@ -59,7 +59,34 @@ def replace_placeholders(sql: str, placeholder: str) -> str:
 # https://arrow.apache.org/docs/python/
 class AdbcHook(DbApiHook):
     """
-    General hook for ADBC access.
+    General-purpose Airflow hook for interacting with databases via the Arrow Database Connectivity (ADBC) standard.
+
+    This hook enables connections to any database supported by an ADBC driver, using the Python ADBC driver manager.
+    It provides methods for executing SQL queries, inserting rows in bulk, and handling Arrow-native data transfers.
+
+    Key Features:
+        - Supports chunked and batched inserts using Apache Arrow RecordBatches for efficient data transfer.
+        - Discovers and loads ADBC drivers dynamically based on connection extras or naming conventions.
+        - Handles dialect-specific connection URIs and driver entrypoints.
+        - Integrates with Airflow's connection system (conn_id, extras, etc.).
+        - Provides custom placeholder replacement for parameterized SQL queries.
+        - Supports both native Arrow binding and DBAPI executemany for inserts.
+        - Exposes configuration via connection extras: driver, entrypoint, db_kwargs, conn_kwargs, dialect.
+
+    Connection Extras:
+        - driver: Name of the ADBC driver to use (e.g., "adbc_driver_postgresql").
+        - entrypoint: Optional Python entrypoint for the driver.
+        - db_kwargs: Dict of keyword arguments passed to the database connection.
+        - conn_kwargs: Dict of keyword arguments passed to the driver connect function.
+        - dialect: SQL dialect name (default: "default").
+
+    Example usage:
+        hook = AdbcHook(adbc_conn_id="my_adbc_conn")
+        records = hook.get_records("SELECT * FROM my_table")
+
+    For more details, see:
+        - Apache Arrow ADBC Python API: https://arrow.apache.org/adbc/current/python/api/adbc_driver_manager.html
+        - Airflow SQL hooks: https://airflow.apache.org/docs/apache-airflow/stable/howto/custom-operator.html#hooks
     """
 
     conn_name_attr = "adbc_conn_id"
@@ -76,7 +103,7 @@ class AdbcHook(DbApiHook):
             "relabeling": {"host": "Connection URL"},
         }
 
-    @functools.lru_cache
+    @cached_property
     def _driver_path(self) -> str:
         import pathlib
         import sys
@@ -108,8 +135,9 @@ class AdbcHook(DbApiHook):
 
     @cached_property
     def uri(self) -> str:
-        if self.connection.host and "::" in self.connection.host:
-            return self.connection.host
+        host = self.connection.host
+        if host and "::" in str(host):
+            return str(host)
         uri = self.get_uri()
         return uri.replace(
             f"{self.conn_type.lower().replace('_', '-')}://",
@@ -138,7 +166,7 @@ class AdbcHook(DbApiHook):
 
     def get_conn(self) -> Connection:
         return connect(
-            driver=self._driver_path(),
+            driver=self._driver_path,
             entrypoint=self.entrypoint,
             db_kwargs=self.db_kwargs,
             conn_kwargs=self.conn_kwargs,
