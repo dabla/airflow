@@ -1,4 +1,3 @@
-
 .. Licensed to the Apache Software Foundation (ASF) under one
    or more contributor license agreements.  See the NOTICE file
    distributed with this work for additional information
@@ -79,6 +78,36 @@ Dependent package                                                               
 ============================================================================================================  ==============
 `apache-airflow-providers-common-sql <https://airflow.apache.org/docs/apache-airflow-providers-common-sql>`_  ``common.sql``
 ============================================================================================================  ==============
+
+Optional dependencies
+----------------------
+
+This provider supports multiple ADBC drivers for different databases. You can install the required driver(s) as extras:
+
+==============  =====================================================================================================================================================================
+Extra           Dependency
+==============  =====================================================================================================================================================================
+``sqlite``      ``adbc-driver-sqlite>=1.7.0``
+``postgresql``  ``adbc-driver-postgresql>=1.7.0``
+``snowflake``   ``adbc-driver-snowflake>=1.7.0``
+``bigquery``    ``adbc-driver-bigquery>=1.7.0``
+``flightsql``   ``adbc-driver-flightsql>=1.7.0``
+``all``         ``adbc-driver-sqlite>=1.7.0``, ``adbc-driver-postgresql>=1.7.0``, ``adbc-driver-snowflake>=1.7.0``, ``adbc-driver-bigquery>=1.7.0``, ``adbc-driver-flightsql>=1.7.0``
+==============  =====================================================================================================================================================================
+
+To use the provider with a specific database, install the provider with the corresponding extra. For example, to use SQLite:
+
+.. code-block:: bash
+
+    pip install apache-airflow-providers-apache-arrow[sqlite]
+
+To install all available drivers:
+
+.. code-block:: bash
+
+    pip install apache-airflow-providers-apache-arrow[all]
+
+These extras install the Python ADBC drivers required to connect to each database. Refer to the documentation for each driver for any additional system requirements.
 
 The changelog for the provider package can be found in the
 `changelog <https://airflow.apache.org/docs/apache-airflow-providers-arrow/0.1.0/changelog.html>`_.

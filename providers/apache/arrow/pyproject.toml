@@ -67,6 +67,30 @@ dependencies = [
     "pyarrow>=18.0.0; python_version >= '3.13'",
 ]
 
+[project.optional-dependencies]
+"sqlite" = [
+    "adbc-driver-sqlite>=1.7.0"
+]
+"snowflake" = [
+    "adbc-driver-snowflake>=1.7.0"
+]
+"bigquery" = [
+    "adbc-driver-bigquery>=1.7.0"
+]
+"flightsql" = [
+    "adbc-driver-flightsql>=1.7.0"
+]
+"postgresql" = [
+    "adbc-driver-postgresql>=1.7.0"
+]
+"all" = [
+    "adbc-driver-sqlite>=1.7.0",
+    "adbc-driver-snowflake>=1.7.0",
+    "adbc-driver-bigquery>=1.7.0",
+    "adbc-driver-flightsql>=1.7.0",
+    "adbc-driver-postgresql>=1.7.0"
+]
+
 [dependency-groups]
 dev = [
     "apache-airflow",
