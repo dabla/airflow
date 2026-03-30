@@ -47,6 +47,7 @@ def fetch_all_handler(cursor) -> list[tuple] | None:
 def replace_placeholders(sql: str, placeholder: str) -> str:
     # Replace each placeholder with $1, $2, $3 ... in order
     counter = [1]
+
     def replacer(match):
         replacement = f"${counter[0]}"
         counter[0] += 1
