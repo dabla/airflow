@@ -12,7 +12,7 @@ resolution-markers = [
 ]
 
 [options]
-exclude-newer = "2026-03-23T15:05:34.630541Z"
+exclude-newer = "2026-03-24T13:08:45.235091259Z"
 exclude-newer-span = "P4D"
 
 [manifest]
@@ -177,11 +177,45 @@ wheels = [
 ]
 
 [[package]]
+name = "adbc-driver-bigquery"
+version = "1.10.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "adbc-driver-manager" },
+    { name = "importlib-resources" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/75/1d/2a1cf2fa0c305de32f78224cfccfc7f59e9c6644e79115732bbcdbe52396/adbc_driver_bigquery-1.10.0.tar.gz", hash = "sha256:97bd6dd233fc61c4484c3a0c0d0dedef57ef9fde22c326a9beec675c2040005f", size = 19243, upload-time = "2026-01-09T07:13:43.862Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4b/a5/a25ae1c62445b1d57381d59485336599861e7776a94405e3092d4cd2e11d/adbc_driver_bigquery-1.10.0-py3-none-macosx_10_15_x86_64.whl", hash = "sha256:a7499e520eaec2f8aaafdac30f919e98e96e59323e85f6fd13d64f96853afac9", size = 9630746, upload-time = "2026-01-09T07:11:07.952Z" },
+    { url = "https://files.pythonhosted.org/packages/9a/c3/bc030190729cd017f17256bef626ed9dc1f0f8eb44c8383f6bc26a4cf13e/adbc_driver_bigquery-1.10.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:bbb96def91b1d1fd8992c2e5ee17e7a7aa1e9443603892db7bcc611ad645b927", size = 8967713, upload-time = "2026-01-09T07:11:13.976Z" },
+    { url = "https://files.pythonhosted.org/packages/08/af/b84575649675e32cba0008472eee23459b5c984b7ff2aa8be9be783b9fb7/adbc_driver_bigquery-1.10.0-py3-none-manylinux1_x86_64.manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:6df2841a64b130f968f7dfceb4813a82d2667716d0218613bf791ea0a54c7372", size = 17724655, upload-time = "2026-01-09T07:11:19.746Z" },
+    { url = "https://files.pythonhosted.org/packages/b7/13/59244c6118babec724214e06e9b770e32135d57491960b0803c4dd5d7599/adbc_driver_bigquery-1.10.0-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:986fae9fbc742fa30868e6eee1434a1bbdaf489b4dad9676688d474ef172927c", size = 16269317, upload-time = "2026-01-09T07:11:25.482Z" },
+    { url = "https://files.pythonhosted.org/packages/3e/58/ca7ef83bdb482bd8e53a94912afd7ced0933c6172166252f798f180ead25/adbc_driver_bigquery-1.10.0-py3-none-win_amd64.whl", hash = "sha256:b0ea1781537c96719837acc81df8f253f462d66663612749412f5f73e7c7db8c", size = 17402610, upload-time = "2026-01-09T07:11:30.738Z" },
+]
+
+[[package]]
+name = "adbc-driver-flightsql"
+version = "1.10.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "adbc-driver-manager" },
+    { name = "importlib-resources" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/55/c3/a97fba4960b76b4b3a3055d8c33f6915e7d40a9c67f065fe760d9a17514a/adbc_driver_flightsql-1.10.0.tar.gz", hash = "sha256:aab737ee7c16d0ec89928ef2297c92f815756e91773085d55cc5eabbebcb9338", size = 24516, upload-time = "2026-01-09T07:13:44.793Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/94/fb/c0d48ded0e75b61bbaff24ef52c89b97ba9b2fbc5caaeb9a102ab17f8f1d/adbc_driver_flightsql-1.10.0-py3-none-macosx_10_15_x86_64.whl", hash = "sha256:a520579be3194e315f35c749afc9cb2ae9b9b7b852c8c2ac5fb9cafa31cdc0c6", size = 7922165, upload-time = "2026-01-09T07:11:35.077Z" },
+    { url = "https://files.pythonhosted.org/packages/c8/55/c8bc08ea1e0ba3a35f6307528efa23f11745c5acb90981d2632f5d416659/adbc_driver_flightsql-1.10.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:c6d6f5e93adcc87f41e70adc07a470f865f36f8dd1e6e9ab2b05855bc44274ca", size = 7366098, upload-time = "2026-01-09T07:11:37.799Z" },
+    { url = "https://files.pythonhosted.org/packages/50/ed/2cc8683b1f59d5c9c82aaf8f5992b41d19e5abc90393af6b882eab072773/adbc_driver_flightsql-1.10.0-py3-none-manylinux1_x86_64.manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:9dfee1c767281c9add95fcf29eac84338107a7610b2d9b19d1169e67083a3eaa", size = 14446811, upload-time = "2026-01-09T07:11:41.532Z" },
+    { url = "https://files.pythonhosted.org/packages/b3/5d/1d4c235a04b349d8d5c89e6ca42e11a6b21e6959f48b5847523e87926b4b/adbc_driver_flightsql-1.10.0-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:e6212fba5a2a59d7a2a71db1b036730908eb85457df3cc3c90563e4ddadaa923", size = 13257586, upload-time = "2026-01-09T07:11:45.63Z" },
+    { url = "https://files.pythonhosted.org/packages/e7/4d/55b96339f18c3932c61bd503c477fabfb7f6c95d4fc4ceb31a1e4275d4fd/adbc_driver_flightsql-1.10.0-py3-none-win_amd64.whl", hash = "sha256:6750c1def8c782469cc33dd883f5c9598086a875432a257adf0522bb1e3b95ca", size = 14231290, upload-time = "2026-01-09T07:11:49.683Z" },
+]
+
+[[package]]
 name = "adbc-driver-manager"
 version = "1.10.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
+    { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/9e/77/b6ffd112a67d133810d0027e9de4408a6e63e0e1c438f5866cc28eb3c213/adbc_driver_manager-1.10.0.tar.gz", hash = "sha256:f04407cf2f99bfde13dea0e136d87219c8a16678d43e322744dbd84cdd8eaac2", size = 208204, upload-time = "2026-01-09T07:13:45.803Z" }
 wheels = [
@@ -226,8 +260,8 @@ name = "adbc-driver-postgresql"
 version = "1.10.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "adbc-driver-manager", marker = "python_full_version < '3.13'" },
-    { name = "importlib-resources", marker = "python_full_version < '3.13'" },
+    { name = "adbc-driver-manager" },
+    { name = "importlib-resources" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/14/15/bb1d0458fb79bec75d6392d695f3dd58e3100789e6605a69e2b0e30ba1b5/adbc_driver_postgresql-1.10.0.tar.gz", hash = "sha256:4687d41180a31f6e6081dfb85cbe4b1611498d6b5c462f34ed3b7e68d20ed90d", size = 20747, upload-time = "2026-01-09T07:13:47.118Z" }
 wheels = [
@@ -239,12 +273,29 @@ wheels = [
 ]
 
 [[package]]
+name = "adbc-driver-snowflake"
+version = "1.10.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "adbc-driver-manager" },
+    { name = "importlib-resources" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/70/f3/46727eead86527ae9bb05ca9b830cf18481dbe6ac1973d7abb8e81ca0cfb/adbc_driver_snowflake-1.10.0.tar.gz", hash = "sha256:56d5d6e3be86684068f86d49a66f85336b8faa9a4b520b98a122c585d007ce83", size = 20168, upload-time = "2026-01-09T07:13:47.87Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ff/cb/f2606741776efc4621607ff6fe565aa073b048174ef0f41dfb7d147dd7c4/adbc_driver_snowflake-1.10.0-py3-none-macosx_10_15_x86_64.whl", hash = "sha256:30237689e6930710b79dcd91fa949f713ead1fd2bb9745fc0ca2b31b876b5ec3", size = 14931557, upload-time = "2026-01-09T07:13:09.198Z" },
+    { url = "https://files.pythonhosted.org/packages/34/3b/c7e9aa0da008e321450a0c8c89875dbaa45ee12b277faa29ff7bf7e78d24/adbc_driver_snowflake-1.10.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:5d96885c7e2e291c0e8cbb98fade45d326cf08681773cce9c2f68bca8ab3dd75", size = 13395954, upload-time = "2026-01-09T07:13:12.679Z" },
+    { url = "https://files.pythonhosted.org/packages/65/d4/3323a56d0bf8fd0b78294c389d6fe441bc135e32d080892aff341b15af59/adbc_driver_snowflake-1.10.0-py3-none-manylinux1_x86_64.manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:d2822989e137c773c4d7fecafeb0031428379bad28e55020d01fd0ad9534daf2", size = 27112164, upload-time = "2026-01-09T07:13:16.659Z" },
+    { url = "https://files.pythonhosted.org/packages/7b/30/1fd5424b0eae94112dd81993eccf23e95a5a72d425832afbb201f68a0014/adbc_driver_snowflake-1.10.0-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:13d47c5e8715001496095201083f6e3b8f69a79305a9e86bfe9a767d13b02916", size = 24220654, upload-time = "2026-01-09T07:13:24.533Z" },
+    { url = "https://files.pythonhosted.org/packages/3d/4a/f29fd0d5df8b9070adabf24129ee79f7aa6c5e4a1ed23120e2d68f2afb8b/adbc_driver_snowflake-1.10.0-py3-none-win_amd64.whl", hash = "sha256:dd67757909dc3aa9cdfca32c62b490d90a486ccc3f0ed8676d7b29b98dc3af2e", size = 26781446, upload-time = "2026-01-09T07:13:31.667Z" },
+]
+
+[[package]]
 name = "adbc-driver-sqlite"
 version = "1.10.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "adbc-driver-manager", marker = "python_full_version < '3.13'" },
-    { name = "importlib-resources", marker = "python_full_version < '3.13'" },
+    { name = "adbc-driver-manager" },
+    { name = "importlib-resources" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/72/34/f4924d98a340835988f135303c7e562f7a388308a3fbb949f357bcb94b04/adbc_driver_sqlite-1.10.0.tar.gz", hash = "sha256:064ed5f1372578d2063cd920514cd2597c6a6db3b0163c2116e373faeedffec6", size = 18298, upload-time = "2026-01-09T07:13:49.001Z" }
 wheels = [
@@ -1692,7 +1743,7 @@ requires-dist = [
     { name = "jinja2", specifier = ">=3.1.5" },
     { name = "jsonschema", specifier = ">=4.19.1" },
     { name = "packaging", specifier = ">=25.0" },
-    { name = "prek", specifier = ">=0.3.6" },
+    { name = "prek", specifier = ">=0.3.8" },
     { name = "psutil", specifier = ">=5.9.6" },
     { name = "pygithub", specifier = ">=2.1.1" },
     { name = "pytest", specifier = ">=9.0.0" },
@@ -1814,6 +1865,30 @@ otel = [
 ]
 statsd = [
     { name = "statsd" },
+]
+
+[package.optional-dependencies]
+all = [
+    { name = "adbc-driver-bigquery" },
+    { name = "adbc-driver-flightsql" },
+    { name = "adbc-driver-postgresql" },
+    { name = "adbc-driver-snowflake" },
+    { name = "adbc-driver-sqlite" },
+]
+bigquery = [
+    { name = "adbc-driver-bigquery" },
+]
+flightsql = [
+    { name = "adbc-driver-flightsql" },
+]
+postgresql = [
+    { name = "adbc-driver-postgresql" },
+]
+snowflake = [
+    { name = "adbc-driver-snowflake" },
+]
+sqlite = [
+    { name = "adbc-driver-sqlite" },
 ]
 
 [package.dev-dependencies]
@@ -2888,13 +2963,24 @@ docs = [
 
 [package.metadata]
 requires-dist = [
+    { name = "adbc-driver-bigquery", marker = "extra == 'all'", specifier = ">=1.7.0" },
+    { name = "adbc-driver-bigquery", marker = "extra == 'bigquery'", specifier = ">=1.7.0" },
+    { name = "adbc-driver-flightsql", marker = "extra == 'all'", specifier = ">=1.7.0" },
+    { name = "adbc-driver-flightsql", marker = "extra == 'flightsql'", specifier = ">=1.7.0" },
     { name = "adbc-driver-manager", specifier = ">=1.7.0" },
+    { name = "adbc-driver-postgresql", marker = "extra == 'all'", specifier = ">=1.7.0" },
+    { name = "adbc-driver-postgresql", marker = "extra == 'postgresql'", specifier = ">=1.7.0" },
+    { name = "adbc-driver-snowflake", marker = "extra == 'all'", specifier = ">=1.7.0" },
+    { name = "adbc-driver-snowflake", marker = "extra == 'snowflake'", specifier = ">=1.7.0" },
+    { name = "adbc-driver-sqlite", marker = "extra == 'all'", specifier = ">=1.7.0" },
+    { name = "adbc-driver-sqlite", marker = "extra == 'sqlite'", specifier = ">=1.7.0" },
     { name = "apache-airflow", editable = "." },
     { name = "apache-airflow-providers-common-sql", editable = "providers/common/sql" },
     { name = "importlib-resources", specifier = ">=1.3" },
     { name = "pyarrow", marker = "python_full_version < '3.13'", specifier = ">=16.1.0" },
     { name = "pyarrow", marker = "python_full_version >= '3.13'", specifier = ">=18.0.0" },
 ]
+provides-extras = ["sqlite", "snowflake", "bigquery", "flightsql", "postgresql", "all"]
 
 [package.metadata.requires-dev]
 dev = [
