@@ -820,7 +820,13 @@ class MappedTaskInstance(RuntimeTaskInstance, LoggingMixin):
         return self.task.do_xcom_push
 
 
-def _xcom_push(ti: RuntimeTaskInstance, key: str, value: Any, mapped_length: int | None = None) -> None:
+def _xcom_push(
+    ti: RuntimeTaskInstance,
+    key: str,
+    value: Any,
+    *,
+    mapped_length: int | None = None,
+) -> None:
     """Push a XCom through XCom.set, which pushes to XCom Backend if configured."""
     # Private function, as we don't want to expose the ability to manually set `mapped_length` to SDK
     # consumers
@@ -832,6 +838,7 @@ def _xcom_push(ti: RuntimeTaskInstance, key: str, value: Any, mapped_length: int
         task_id=ti.task_id,
         run_id=ti.run_id,
         map_index=ti.map_index,
+        dag_result=ti.task.returns_dag_result,
         _mapped_length=mapped_length,
     )
 
@@ -1894,11 +1901,7 @@ def finalize(
             try:
                 SUPERVISOR_COMMS.send(SetRenderedFields(rendered_fields=_serialize_rendered_fields(ti.task)))
             except Exception:
-                log.exception(
-                    "Failed to set rendered fields during finalization",
-                    task_id=ti.task_id,
-                    dag_id=ti.dag_id,
-                )
+                log.exception("Failed to set rendered fields during finalization", ti=ti, task=ti.task)
 
     log.debug("Running finalizers", ti=ti)
     if state == TaskInstanceState.SUCCESS:
