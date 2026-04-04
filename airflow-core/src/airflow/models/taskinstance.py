@@ -1625,7 +1625,10 @@ class TaskInstance(Base, LoggingMixin, BaseWorkload):
             assert isinstance(self.task, Operator)
 
         if start_trigger_args := self.start_trigger_args:
+            from airflow.sdk.serde import serialize as serde_serialize
+
             trigger_kwargs = start_trigger_args.trigger_kwargs or {}
+            next_kwargs = serde_serialize(start_trigger_args.next_kwargs or {})
             timeout = start_trigger_args.timeout
 
             # Calculate timeout too if it was passed
@@ -1650,7 +1653,7 @@ class TaskInstance(Base, LoggingMixin, BaseWorkload):
             self.state = TaskInstanceState.DEFERRED
             self.trigger_id = trigger_row.id
             self.next_method = start_trigger_args.next_method
-            self.next_kwargs = start_trigger_args.next_kwargs or {}
+            self.next_kwargs = next_kwargs
             self.start_date = timezone.utcnow()
 
             # If an execution_timeout is set, set the timeout to the minimum of
