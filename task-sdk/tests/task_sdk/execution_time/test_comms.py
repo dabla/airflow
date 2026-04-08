@@ -26,7 +26,14 @@ import pytest
 import structlog
 
 from airflow.sdk import timezone
-from airflow.sdk.execution_time.comms import BundleInfo, CommsDecoder, MaskSecret, StartupDetails, VariableResult, _ResponseFrame
+from airflow.sdk.execution_time.comms import (
+    BundleInfo,
+    CommsDecoder,
+    MaskSecret,
+    StartupDetails,
+    VariableResult,
+    _ResponseFrame,
+)
 
 
 class TestCommsModels:
@@ -151,7 +158,7 @@ class TestCommsDecoder:
 
     def test_send_thread_safety(self):
         r, w = socketpair()
-        decoder =  CommsDecoder(socket=r, log=structlog.get_logger())
+        decoder = CommsDecoder(socket=r, log=structlog.get_logger())
         num_threads = 5
         results = [None] * num_threads
         errors = [None] * num_threads
