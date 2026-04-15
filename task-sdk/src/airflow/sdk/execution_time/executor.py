@@ -40,6 +40,7 @@ from airflow.sdk.execution_time.task_runner import (
 )
 
 if TYPE_CHECKING:
+    import jinja2
     from structlog.typing import FilteringBoundLogger as Logger
 
     from airflow.sdk import Context
@@ -109,9 +110,11 @@ class TaskExecutor(LoggingMixin):
     def __init__(
         self,
         task_instance: MappedTaskInstance,
+        jinja_env: jinja2.Environment,
     ):
         super().__init__()
         self.task_instance = task_instance
+        self.jinja_env = jinja_env
         self._result: Any | None = None
         self._start_time: float | None = None
 
@@ -143,9 +146,11 @@ class TaskExecutor(LoggingMixin):
         return self.task_instance.is_async
 
     def run(self, context: Context):
+        self.operator.render_template_fields(context=context, jinja_env=self.jinja_env)
         return _execute_task(context, self.task_instance, self.log)
 
     async def arun(self, context: Context):
+        self.operator.render_template_fields(context=context, jinja_env=self.jinja_env)
         return await _execute_async_task(context, self.task_instance, self.log)
 
     def __enter__(self):

@@ -50,6 +50,8 @@ from airflow.sdk.execution_time.lazy_sequence import XComIterable
 from airflow.sdk.execution_time.task_runner import MappedTaskInstance
 
 if TYPE_CHECKING:
+    import jinja2
+
     from airflow.sdk.definitions._internal.expandinput import ExpandInput
     from airflow.sdk.definitions.context import Context
     from airflow.sdk.definitions.mappedoperator import MappedOperator
@@ -61,7 +63,6 @@ class IterableOperator(BaseOperator):
     _operator: MappedOperator
     expand_input: ExpandInput
     partial_kwargs: dict[str, Any]
-    # each operator should override this class attr for shallow copy attrs.
     shallow_copy_attrs: Sequence[str] = (
         "_operator",
         "expand_input",
@@ -139,12 +140,27 @@ class IterableOperator(BaseOperator):
             return self.execution_timeout.total_seconds()
         return None
 
+    def _do_render_template_fields(
+        self,
+        parent: Any,
+        template_fields: Iterable[str],
+        context: Context,
+        jinja_env: jinja2.Environment,
+        seen_oids: set[int],
+    ) -> None:
+        # IterableOperator doesn't need to render template fields as the actual operator's template fields
+        # will be rendered in the TaskExecutor when running each mapped task instance.
+        pass
+
     def _get_specified_expand_input(self) -> ExpandInput:
         return self.expand_input
 
-    def _unmap_operator(self, mapped_kwargs: Context):
+    def _unmap_operator(self, mapped_kwargs: Context) -> BaseOperator:
         self._number_of_tasks += 1
-        return self._operator.unmap(mapped_kwargs)
+        unmapped_task = self._operator.unmap(mapped_kwargs)
+        # Make sure deferred operators will always raise a DeferredTask exception when executed
+        unmapped_task.start_from_trigger = False
+        return unmapped_task
 
     def _xcom_push(self, context: Context, task: MappedTaskInstance, value: Any) -> None:
         self.log.debug("Pushing XCom %s", task.xcom_key)
@@ -163,6 +179,7 @@ class IterableOperator(BaseOperator):
         deferred_tasks: deque[MappedTaskInstance] = deque()
         failed_tasks: deque[MappedTaskInstance] = deque()
         chunked_tasks = batched(tasks, self.max_workers)
+        jinja_env = self.get_template_env(dag=self.dag)
         do_xcom_push = True
 
         self.log.info("Running tasks with %d workers", self.max_workers)
@@ -172,9 +189,9 @@ class IterableOperator(BaseOperator):
                 for task in next(chunked_tasks, []):
                     do_xcom_push = task.do_xcom_push
                     if task.is_async:
-                        future = executor.submit(self._run_async_operator, context, task)
+                        future = executor.submit(self._run_async_operator, context, task, jinja_env)
                     else:
-                        future = executor.submit(self._run_operator, context, task)
+                        future = executor.submit(self._run_operator, context, task, jinja_env)
                     futures[future] = task
 
                 while futures:
@@ -244,9 +261,9 @@ class IterableOperator(BaseOperator):
 
                         for task in next(chunked_tasks, []):
                             if task.is_async:
-                                future = executor.submit(self._run_async_operator, context, task)
+                                future = executor.submit(self._run_async_operator, context, task, jinja_env)
                             else:
-                                future = executor.submit(self._run_operator, context, task)
+                                future = executor.submit(self._run_operator, context, task, jinja_env)
                             futures[future] = task
 
         if not failed_tasks:
@@ -279,8 +296,8 @@ class IterableOperator(BaseOperator):
 
         return self._run_tasks(context=context, tasks=list(failed_tasks))
 
-    def _run_operator(self, context: Context, task_instance: MappedTaskInstance):
-        with TaskExecutor(task_instance=task_instance) as executor:
+    def _run_operator(self, context: Context, task_instance: MappedTaskInstance, jinja_env: jinja2.Environment):
+        with TaskExecutor(task_instance=task_instance, jinja_env=jinja_env) as executor:
             return executor.run(
                 context={
                     **dict(context),
@@ -292,8 +309,8 @@ class IterableOperator(BaseOperator):
                 }
             )
 
-    async def _run_async_operator(self, context: Context, task_instance: MappedTaskInstance):
-        async with TaskExecutor(task_instance=task_instance) as executor:
+    async def _run_async_operator(self, context: Context, task_instance: MappedTaskInstance, jinja_env: jinja2.Environment):
+        async with TaskExecutor(task_instance=task_instance, jinja_env=jinja_env) as executor:
             return await executor.arun(
                 context={
                     **dict(context),

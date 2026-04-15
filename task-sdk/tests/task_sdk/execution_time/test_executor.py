@@ -217,81 +217,94 @@ class TestCollectFutures:
 
 
 class TestTaskExecutor:
-    def test_dag_id_property(self):
+    @mock.patch("airflow.sdk.definitions._internal.templater.SandboxedEnvironment", autospec=True)
+    def test_dag_id_property(self, mock_jinja_env):
         ti = _make_mapped_ti(dag_id="my_dag")
-        executor = TaskExecutor(task_instance=ti)
+        executor = TaskExecutor(task_instance=ti, jinja_env=mock_jinja_env)
         assert executor.dag_id == "my_dag"
 
-    def test_task_id_property(self):
+    @mock.patch("airflow.sdk.definitions._internal.templater.SandboxedEnvironment", autospec=True)
+    def test_task_id_property(self, mock_jinja_env):
         ti = _make_mapped_ti(task_id="my_task")
-        executor = TaskExecutor(task_instance=ti)
+        executor = TaskExecutor(task_instance=ti, jinja_env=mock_jinja_env)
         assert executor.task_id == "my_task"
 
-    def test_task_index_returns_map_index(self):
+    @mock.patch("airflow.sdk.definitions._internal.templater.SandboxedEnvironment", autospec=True)
+    def test_task_index_returns_map_index(self, mock_jinja_env):
         ti = _make_mapped_ti(map_index=3)
-        executor = TaskExecutor(task_instance=ti)
+        executor = TaskExecutor(task_instance=ti, jinja_env=mock_jinja_env)
         assert executor.task_index == 3
 
-    def test_task_index_raises_when_map_index_is_none(self):
+    @mock.patch("airflow.sdk.definitions._internal.templater.SandboxedEnvironment", autospec=True)
+    def test_task_index_raises_when_map_index_is_none(self, mock_jinja_env):
         """task_index must raise ValueError when map_index is None (e.g. unmapped task)."""
         ti = _make_mapped_ti()
         ti.map_index = None  # force None via attribute assignment after construction
-        executor = TaskExecutor(task_instance=ti)
+        executor = TaskExecutor(task_instance=ti, jinja_env=mock_jinja_env)
         with pytest.raises(ValueError, match="map_index should not be None"):
             _ = executor.task_index
 
-    def test_key_property_returns_xcom_key(self):
+    @mock.patch("airflow.sdk.definitions._internal.templater.SandboxedEnvironment", autospec=True)
+    def test_key_property_returns_xcom_key(self, mock_jinja_env):
         ti = _make_mapped_ti(task_id="op", map_index=2)
-        executor = TaskExecutor(task_instance=ti)
+        executor = TaskExecutor(task_instance=ti, jinja_env=mock_jinja_env)
         assert executor.key == ti.xcom_key
         assert executor.key == "op_2"
 
-    def test_operator_property(self):
+    @mock.patch("airflow.sdk.definitions._internal.templater.SandboxedEnvironment", autospec=True)
+    def test_operator_property(self, mock_jinja_env):
         ti = _make_mapped_ti()
-        executor = TaskExecutor(task_instance=ti)
+        executor = TaskExecutor(task_instance=ti, jinja_env=mock_jinja_env)
         assert executor.operator is ti.task
 
-    def test_is_async_property_sync(self):
+    @mock.patch("airflow.sdk.definitions._internal.templater.SandboxedEnvironment", autospec=True)
+    def test_is_async_property_sync(self, mock_jinja_env):
         ti = _make_mapped_ti(is_async=False)
-        executor = TaskExecutor(task_instance=ti)
+        executor = TaskExecutor(task_instance=ti, jinja_env=mock_jinja_env)
         assert executor.is_async is False
 
-    def test_is_async_property_async(self):
+    @mock.patch("airflow.sdk.definitions._internal.templater.SandboxedEnvironment", autospec=True)
+    def test_is_async_property_async(self, mock_jinja_env):
         ti = _make_mapped_ti(is_async=True)
-        executor = TaskExecutor(task_instance=ti)
+        executor = TaskExecutor(task_instance=ti, jinja_env=mock_jinja_env)
         assert executor.is_async is True
 
-    def test_enter_sets_start_time(self):
+    @mock.patch("airflow.sdk.definitions._internal.templater.SandboxedEnvironment", autospec=True)
+    def test_enter_sets_start_time(self, mock_jinja_env):
         ti = _make_mapped_ti()
-        executor = TaskExecutor(task_instance=ti)
+        executor = TaskExecutor(task_instance=ti, jinja_env=mock_jinja_env)
         assert executor._start_time is None
         executor.__enter__()
         assert executor._start_time is not None
 
-    def test_enter_returns_self(self):
+    @mock.patch("airflow.sdk.definitions._internal.templater.SandboxedEnvironment", autospec=True)
+    def test_enter_returns_self(self, mock_jinja_env):
         ti = _make_mapped_ti()
-        executor = TaskExecutor(task_instance=ti)
+        executor = TaskExecutor(task_instance=ti, jinja_env=mock_jinja_env)
         with executor as ctx:
             assert ctx is executor
 
-    def test_exit_success_sets_state(self):
+    @mock.patch("airflow.sdk.definitions._internal.templater.SandboxedEnvironment", autospec=True)
+    def test_exit_success_sets_state(self, mock_jinja_env):
         """__exit__ without an exception marks the task instance as SUCCESS."""
         ti = _make_mapped_ti()
-        with TaskExecutor(task_instance=ti):
+        with TaskExecutor(task_instance=ti, jinja_env=mock_jinja_env):
             pass  # no exception
         assert ti.state == TaskInstanceState.SUCCESS
 
-    def test_exit_with_task_deferred_reraises(self):
+    @mock.patch("airflow.sdk.definitions._internal.templater.SandboxedEnvironment", autospec=True)
+    def test_exit_with_task_deferred_reraises(self, mock_jinja_env):
         """TaskDeferred must propagate unchanged through __exit__."""
         ti = _make_mapped_ti()
         trigger = mock.Mock()
         deferred = TaskDeferred(trigger=trigger, method_name="resume")
 
         with pytest.raises(TaskDeferred):
-            with TaskExecutor(task_instance=ti):
+            with TaskExecutor(task_instance=ti, jinja_env=mock_jinja_env):
                 raise deferred
 
-    def test_exit_reschedules_when_retries_remain(self):
+    @mock.patch("airflow.sdk.definitions._internal.templater.SandboxedEnvironment", autospec=True)
+    def test_exit_reschedules_when_retries_remain(self, mock_jinja_env):
         """
         When a retryable exception occurs and retries are not exhausted,
         the task state is set to UP_FOR_RESCHEDULE and
@@ -301,13 +314,14 @@ class TestTaskExecutor:
         ti = _make_mapped_ti(try_number=0, max_tries=3)
 
         with pytest.raises(AirflowRescheduleTaskInstanceException):
-            with TaskExecutor(task_instance=ti):
+            with TaskExecutor(task_instance=ti, jinja_env=mock_jinja_env):
                 raise RuntimeError("transient failure")
 
         assert ti.state == TaskInstanceState.UP_FOR_RESCHEDULE
         assert ti.try_number == 1  # incremented
 
-    def test_exit_fails_when_retries_exhausted(self):
+    @mock.patch("airflow.sdk.definitions._internal.templater.SandboxedEnvironment", autospec=True)
+    def test_exit_fails_when_retries_exhausted(self, mock_jinja_env):
         """
         When a retryable exception occurs and all retries are exhausted,
         the task state is set to FAILED and the original exception is re-raised.
@@ -317,7 +331,7 @@ class TestTaskExecutor:
         original_error = RuntimeError("permanent failure")
 
         with pytest.raises(RuntimeError, match="permanent failure"):
-            with TaskExecutor(task_instance=ti):
+            with TaskExecutor(task_instance=ti, jinja_env=mock_jinja_env):
                 raise original_error
 
         assert ti.state == TaskInstanceState.FAILED
@@ -332,27 +346,29 @@ class TestTaskExecutor:
             (3, 3, True),  # next=4, max=3 → 4>3 → fail
         ],
     )
-    def test_exit_retry_boundary(self, try_number, max_tries, should_fail):
+    @mock.patch("airflow.sdk.definitions._internal.templater.SandboxedEnvironment", autospec=True)
+    def test_exit_retry_boundary(self, try_number, max_tries, should_fail, mock_jinja_env):
         """Exhaustive boundary checks for the retry/fail decision in __exit__."""
         ti = _make_mapped_ti(try_number=try_number, max_tries=max_tries)
         if should_fail:
             with pytest.raises(RuntimeError):
-                with TaskExecutor(task_instance=ti):
+                with TaskExecutor(task_instance=ti, jinja_env=mock_jinja_env):
                     raise RuntimeError("err")
             assert ti.state == TaskInstanceState.FAILED
         else:
             with pytest.raises(AirflowRescheduleTaskInstanceException):
-                with TaskExecutor(task_instance=ti):
+                with TaskExecutor(task_instance=ti, jinja_env=mock_jinja_env):
                     raise RuntimeError("err")
             assert ti.state == TaskInstanceState.UP_FOR_RESCHEDULE
 
-    def test_run_delegates_to_execute_task(self):
+    @mock.patch("airflow.sdk.definitions._internal.templater.SandboxedEnvironment", autospec=True)
+    def test_run_delegates_to_execute_task(self, mock_jinja_env):
         """run() must call _execute_task with the given context."""
         ti = _make_mapped_ti()
         task = BaseOperator(task_id="test_task")
         get_inline_dag("test_dag", task)
         context = mock_context(task)
-        executor = TaskExecutor(task_instance=ti)
+        executor = TaskExecutor(task_instance=ti, jinja_env=mock_jinja_env)
 
         with mock.patch(
             "airflow.sdk.execution_time.executor._execute_task",
@@ -365,13 +381,14 @@ class TestTaskExecutor:
         assert result == "result"
 
     @pytest.mark.asyncio
-    async def test_arun_delegates_to_execute_async_task(self):
+    @mock.patch("airflow.sdk.definitions._internal.templater.SandboxedEnvironment", autospec=True)
+    async def test_arun_delegates_to_execute_async_task(self, mock_jinja_env):
         """arun() must call _execute_async_task with the given context."""
         ti = _make_mapped_ti(is_async=True)
         task = BaseOperator(task_id="test_task")
         get_inline_dag("test_dag", task)
         context = mock_context(task)
-        executor = TaskExecutor(task_instance=ti)
+        executor = TaskExecutor(task_instance=ti, jinja_env=mock_jinja_env)
 
         with mock.patch(
             "airflow.sdk.execution_time.executor._execute_async_task",
@@ -383,23 +400,26 @@ class TestTaskExecutor:
         assert result == "async_result"
 
     @pytest.mark.asyncio
-    async def test_async_context_manager_enter_returns_self(self):
+    @mock.patch("airflow.sdk.definitions._internal.templater.SandboxedEnvironment", autospec=True)
+    async def test_async_context_manager_enter_returns_self(self, mock_jinja_env):
         ti = _make_mapped_ti()
-        executor = TaskExecutor(task_instance=ti)
+        executor = TaskExecutor(task_instance=ti, jinja_env=mock_jinja_env)
         async with executor as ctx:
             assert ctx is executor
 
     @pytest.mark.asyncio
-    async def test_async_context_manager_exit_success(self):
+    @mock.patch("airflow.sdk.definitions._internal.templater.SandboxedEnvironment", autospec=True)
+    async def test_async_context_manager_exit_success(self, mock_jinja_env):
         ti = _make_mapped_ti()
-        async with TaskExecutor(task_instance=ti):
+        async with TaskExecutor(task_instance=ti, jinja_env=mock_jinja_env):
             pass
         assert ti.state == TaskInstanceState.SUCCESS
 
     @pytest.mark.asyncio
-    async def test_async_context_manager_exit_reschedules(self):
+    @mock.patch("airflow.sdk.definitions._internal.templater.SandboxedEnvironment", autospec=True)
+    async def test_async_context_manager_exit_reschedules(self, mock_jinja_env):
         ti = _make_mapped_ti(try_number=0, max_tries=3)
         with pytest.raises(AirflowRescheduleTaskInstanceException):
-            async with TaskExecutor(task_instance=ti):
+            async with TaskExecutor(task_instance=ti, jinja_env=mock_jinja_env):
                 raise RuntimeError("async transient failure")
         assert ti.state == TaskInstanceState.UP_FOR_RESCHEDULE
