@@ -296,7 +296,9 @@ class IterableOperator(BaseOperator):
 
         return self._run_tasks(context=context, tasks=list(failed_tasks))
 
-    def _run_operator(self, context: Context, task_instance: MappedTaskInstance, jinja_env: jinja2.Environment):
+    def _run_operator(
+        self, context: Context, task_instance: MappedTaskInstance, jinja_env: jinja2.Environment
+    ):
         with TaskExecutor(task_instance=task_instance, jinja_env=jinja_env) as executor:
             return executor.run(
                 context={
@@ -309,7 +311,9 @@ class IterableOperator(BaseOperator):
                 }
             )
 
-    async def _run_async_operator(self, context: Context, task_instance: MappedTaskInstance, jinja_env: jinja2.Environment):
+    async def _run_async_operator(
+        self, context: Context, task_instance: MappedTaskInstance, jinja_env: jinja2.Environment
+    ):
         async with TaskExecutor(task_instance=task_instance, jinja_env=jinja_env) as executor:
             return await executor.arun(
                 context={
