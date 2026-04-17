@@ -89,4 +89,4 @@ Extra       Dependencies
 ==========  ================
 
 The changelog for the provider package can be found in the
-`changelog <https://airflow.apache.org/docs/apache-airflow-ibm-mq/0.1.0/changelog.html>`_.
+`changelog <https://airflow.apache.org/docs/apache-airflow-providers-ibm-mq/0.1.0/changelog.html>`_.
