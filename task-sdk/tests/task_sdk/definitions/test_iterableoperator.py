@@ -18,7 +18,6 @@
 from __future__ import annotations
 
 import copy
-import uuid
 from typing import TYPE_CHECKING
 
 try:
@@ -29,7 +28,7 @@ except NameError:
 
 import pytest
 
-from airflow.sdk import DAG, BaseOperator, timezone
+from airflow.sdk import DAG, BaseOperator
 from airflow.sdk.definitions._internal.abstractoperator import DEFAULT_RETRIES
 from airflow.sdk.definitions._internal.expandinput import DictOfListsExpandInput, ListOfDictsExpandInput
 from airflow.sdk.definitions.iterableoperator import IterableOperator
@@ -144,26 +143,26 @@ class TestIterableOperator:
             ([], []),
         ],
     )
-    def test_list_of_dicts_expand_input_iter_values(self, actual, expected):
+    def test_list_of_dicts_expand_input_iter_values(self, dag_maker, actual, expected):
         """Test IterableOperator with ListOfDictsExpandInput expand_input."""
         if not actual:
             pytest.skip("Empty list case tested separately")
 
-        dag = self.get_dag()
-        expand_input = ListOfDictsExpandInput(actual)
-        iterable_op = self.create_iterable_operator(dag, expand_input)
+        with dag_maker(dag_id="test_dag") as dag:
+            expand_input = ListOfDictsExpandInput(actual)
+            iterable_op = self.create_iterable_operator(dag, expand_input)
 
-        result = list(iterable_op.expand_input.iter_values({}))
-        assert result == expected
+            result = list(iterable_op.expand_input.iter_values({}))
+            assert result == expected
 
-    def test_list_of_dicts_empty(self):
+    def test_list_of_dicts_empty(self, dag_maker):
         """Test IterableOperator with empty list."""
-        dag = self.get_dag()
-        expand_input = ListOfDictsExpandInput([])
-        iterable_op = self.create_iterable_operator(dag, expand_input)
+        with dag_maker(dag_id="test_dag") as dag:
+            expand_input = ListOfDictsExpandInput([])
+            iterable_op = self.create_iterable_operator(dag, expand_input)
 
-        result = list(iterable_op.expand_input.iter_values({}))
-        assert result == []
+            result = list(iterable_op.expand_input.iter_values({}))
+            assert result == []
 
     @pytest.mark.parametrize(
         ("actual", "expected"),
