@@ -17,15 +17,16 @@
 from __future__ import annotations
 
 from collections.abc import Generator
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, patch
 
 import pytest
 from asyncssh import SFTPClient, SSHClientConnection
 
-from airflow.providers.sftp.hooks.sftp import SFTPHookAsync
-
 pytest_plugins = "tests_common.pytest_plugin"
+
+if TYPE_CHECKING:
+    from airflow.providers.sftp.hooks.sftp import SFTPHookAsync
 
 
 @pytest.fixture
@@ -34,6 +35,7 @@ def sftp_hook_mocked() -> Generator[tuple[SFTPHookAsync, SFTPClient], Any, None]
     Fixture that mocks SFTPHookAsync._get_conn with SSH + SFTP async mocks.
     Returns a tuple (hook, sftp_client_mock) so tests can easily set readdir.
     """
+    from airflow.providers.sftp.hooks.sftp import SFTPHookAsync
 
     sftp_client_mock = AsyncMock(spec=SFTPClient)
     sftp_client_mock.readdir.return_value = []
