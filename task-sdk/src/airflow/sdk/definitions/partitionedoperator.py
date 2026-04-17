@@ -64,6 +64,7 @@ from airflow.sdk.definitions.param import ParamsDict
 from airflow.sdk.definitions.xcom_arg import XComArg
 
 if TYPE_CHECKING:
+    from airflow.sdk.definitions.iterableoperator import IterableOperator, MappedIterableOperator
     from airflow.sdk.definitions.mappedoperator import ValidationSource
 
 
@@ -123,7 +124,7 @@ class PartitionedOperator:
             raise TypeError(f"expected XComArg or list[dict], not {type(kwargs).__name__}")
         return self._expand(ListOfDictsExpandInput(kwargs), strict=strict)
 
-    def iterate(self, **mapped_kwargs: OperatorExpandArgument) -> MappedOperator:
+    def iterate(self, **mapped_kwargs: OperatorExpandArgument) -> IterableOperator | MappedIterableOperator:
         if not mapped_kwargs:
             raise TypeError("no arguments to iterate against")
 
@@ -136,13 +137,13 @@ class PartitionedOperator:
         # Since the input is already checked at parse time, we can set strict
         # to False to skip the checks on execution.
         expand_input = DictOfListsExpandInput(mapped_kwargs)
-        return self._expand(
+        return self._iterate(
             expand_input, strict=False, apply_upstream_relationship=False
         )
 
     def iterate_kwargs(
         self, kwargs: OperatorExpandKwargsArgument, *, strict: bool = True
-    ) -> MappedOperator:
+    ) -> IterableOperator | MappedIterableOperator:
         if isinstance(kwargs, Sequence):
             for item in kwargs:
                 if not isinstance(item, (XComArg, Mapping)):
@@ -155,8 +156,32 @@ class PartitionedOperator:
             )
 
         expand_input = ListOfDictsExpandInput(kwargs)
-        return self._expand(
+        return self._iterate(
             expand_input, strict=strict, apply_upstream_relationship=False
+        )
+
+    def _iterate(
+        self,
+        expand_input: ExpandInput,
+        *,
+        strict: bool,
+        apply_upstream_relationship: bool = True,
+    ) -> IterableOperator | MappedIterableOperator:
+        from airflow.sdk.definitions.iterableoperator import IterableOperator, MappedIterableOperator
+
+        operator = self._expand(
+            expand_input, strict=strict, apply_upstream_relationship=apply_upstream_relationship
+        )
+
+        if self.size > 0:
+            return MappedIterableOperator(
+                mapped_operator=operator,
+                expand_input=expand_input,
+                partition_size=self.size,
+            )
+        return IterableOperator(
+            operator=operator,
+            expand_input=expand_input,
         )
 
     def _expand(
@@ -168,7 +193,6 @@ class PartitionedOperator:
     ) -> MappedOperator:
         from airflow.providers.standard.operators.empty import EmptyOperator
         from airflow.providers.standard.utils.skipmixin import SkipMixin
-        from airflow.sdk.definitions.iterableoperator import IterableOperator, MappedIterableOperator
         from airflow.sdk import BaseSensorOperator
 
         self._expand_called = True
@@ -196,7 +220,7 @@ class PartitionedOperator:
         except AttributeError:
             operator_name = self.operator_class.__name__
 
-        operator = MappedOperator(
+        return MappedOperator(
             operator_class=self.operator_class,
             expand_input=expand_input,
             partial_kwargs=partial_kwargs,
@@ -225,16 +249,6 @@ class PartitionedOperator:
             start_from_trigger=start_from_trigger,
             start_trigger_args=start_trigger_args,
             apply_upstream_relationship=apply_upstream_relationship,
-        )
-        if self.size > 0:
-            return MappedIterableOperator(
-                mapped_operator=operator,
-                expand_input=expand_input,
-                partition_size=self.size,
-            )
-        return IterableOperator(
-            operator=operator,
-            expand_input=expand_input,
         )
 
 
@@ -330,7 +344,7 @@ class DecoratedPartitionedOperator(PartitionedOperator):
                 raise ValueError("Trigger rule not configurable for teardown tasks.")
             self.kwargs.update(trigger_rule=TriggerRule.ALL_DONE_SETUP_SUCCESS)
         expand_input = DictOfListsExpandInput(map_kwargs)
-        operator = self._expand(
+        operator = self._iterate(
             expand_input,
             strict=False,
             apply_upstream_relationship=False,
@@ -366,12 +380,35 @@ class DecoratedPartitionedOperator(PartitionedOperator):
                 f"expected XComArg or list[dict], not {type(kwargs).__name__}"
             )
         expand_input = ListOfDictsExpandInput(kwargs)
-        operator = self._expand(
+        operator = self._iterate(
             expand_input,
             strict=strict,
             apply_upstream_relationship=False,
         )
         return XComArg(operator=operator)
+
+    def _iterate(
+        self,
+        expand_input: ExpandInput,
+        *,
+        strict: bool,
+        apply_upstream_relationship: bool = True,
+    ) -> IterableOperator | MappedIterableOperator:
+        from airflow.sdk.definitions.iterableoperator import IterableOperator, MappedIterableOperator
+
+        operator = self._expand(
+            expand_input, strict=strict, apply_upstream_relationship=apply_upstream_relationship
+        )
+
+        if self.size > 0:
+            return MappedIterableOperator(
+                mapped_operator=operator,
+                expand_input=DecoratedExpandInput(expand_input),
+                partition_size=self.size,
+            )
+        return IterableOperator(
+            operator=operator, expand_input=DecoratedExpandInput(expand_input)
+        )
 
     def _expand(
         self,
@@ -380,8 +417,6 @@ class DecoratedPartitionedOperator(PartitionedOperator):
         strict: bool,
         apply_upstream_relationship: bool = True,
     ) -> MappedOperator:
-        from airflow.sdk.definitions.iterableoperator import IterableOperator, MappedIterableOperator
-
         ensure_xcomarg_return_value(expand_input.value)
 
         task_kwargs = self.kwargs.copy()
@@ -452,7 +487,7 @@ class DecoratedPartitionedOperator(PartitionedOperator):
         except AttributeError:
             operator_name = self.operator_class.__name__
 
-        operator = DecoratedMappedOperator(
+        return DecoratedMappedOperator(
             operator_class=self.operator_class,
             expand_input=EXPAND_INPUT_EMPTY,  # Don't use this; mapped values go to op_kwargs_expand_input.
             partial_kwargs=partial_kwargs,
@@ -485,13 +520,4 @@ class DecoratedPartitionedOperator(PartitionedOperator):
             start_trigger_args=self.operator_class.start_trigger_args,
             start_from_trigger=self.operator_class.start_from_trigger,
             apply_upstream_relationship=apply_upstream_relationship,
-        )
-        if self.size > 0:
-            return MappedIterableOperator(
-                mapped_operator=operator,
-                expand_input=DecoratedExpandInput(expand_input),
-                partition_size=self.size,
-            )
-        return IterableOperator(
-            operator=operator, expand_input=DecoratedExpandInput(expand_input)
         )
