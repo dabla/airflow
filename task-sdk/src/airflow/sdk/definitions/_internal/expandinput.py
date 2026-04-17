@@ -131,13 +131,11 @@ class PartitionedExpandInput(DecoratedExpandInput):
         self.size = size
 
     def iter_values(self, context: Mapping[str, Any]) -> Iterable[dict]:
-        data = list(self.delegate.iter_values(context))
-        chunk_size = len(data) // self.size
         map_index = context["ti"].map_index
-        start = map_index * chunk_size
-        end = start + chunk_size
-        partitioned_data = data[start:end]
-        return partitioned_data
+
+        for index, item in enumerate(self.delegate.iter_values(context)):
+            if index % self.size == map_index:
+                yield item
 
 
 @attrs.define(kw_only=True)
