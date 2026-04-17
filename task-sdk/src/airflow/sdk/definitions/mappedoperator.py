@@ -47,8 +47,6 @@ from airflow.sdk.definitions._internal.abstractoperator import (
     TaskStateChangeCallbackAttrType,
 )
 from airflow.sdk.definitions._internal.expandinput import (
-    DictOfListsExpandInput,
-    ListOfDictsExpandInput,
     is_mappable,
 )
 from airflow.sdk.definitions._internal.types import NOTSET
@@ -65,9 +63,9 @@ if TYPE_CHECKING:
         OperatorExpandArgument,
         OperatorExpandKwargsArgument,
     )
-    from airflow.sdk.definitions.iterableoperator import IterableOperator
     from airflow.sdk.definitions.operator_resources import Resources
     from airflow.sdk.definitions.param import ParamsDict
+    from airflow.sdk.definitions.partitionedoperator import PartitionedOperator
     from airflow.sdk.types import WeightRuleParam
     from airflow.triggers.base import StartTriggerArgs
 
@@ -195,116 +193,24 @@ class OperatorPartial:
             warnings.warn(f"Task {task_id} was never mapped!", category=UserWarning, stacklevel=1)
 
     def expand(self, **mapped_kwargs: OperatorExpandArgument) -> MappedOperator:
-        if not mapped_kwargs:
-            raise TypeError("no arguments to expand against")
-        validate_mapping_kwargs(self.operator_class, "expand", mapped_kwargs)
-        prevent_duplicates(self.kwargs, mapped_kwargs, fail_reason="unmappable or already specified")
-        # Since the input is already checked at parse time, we can set strict
-        # to False to skip the checks on execution.
-        return self._expand(DictOfListsExpandInput(mapped_kwargs), strict=False)
+        return self.partition(size=0).expand(**mapped_kwargs)
 
     def expand_kwargs(self, kwargs: OperatorExpandKwargsArgument, *, strict: bool = True) -> MappedOperator:
-        from airflow.sdk.definitions.xcom_arg import XComArg
+        return self.partition(size=0).expand_kwargs(kwargs, strict=strict)
 
-        if isinstance(kwargs, Sequence):
-            for item in kwargs:
-                if not isinstance(item, (XComArg, Mapping)):
-                    raise TypeError(f"expected XComArg or list[dict], not {type(kwargs).__name__}")
-        elif not isinstance(kwargs, XComArg):
-            raise TypeError(f"expected XComArg or list[dict], not {type(kwargs).__name__}")
-        return self._expand(ListOfDictsExpandInput(kwargs), strict=strict)
-
-    def iterate(self, **mapped_kwargs: OperatorExpandArgument) -> IterableOperator:
-        if not mapped_kwargs:
-            raise TypeError("no arguments to iterate against")
-        from airflow.sdk.definitions.iterableoperator import IterableOperator
-
-        validate_mapping_kwargs(self.operator_class, "iterate", mapped_kwargs)
-        prevent_duplicates(self.kwargs, mapped_kwargs, fail_reason="unmappable or already specified")
-        # Since the input is already checked at parse time, we can set strict
-        # to False to skip the checks on execution.
-        expand_input = DictOfListsExpandInput(mapped_kwargs)
-        operator = self._expand(expand_input, strict=False, apply_upstream_relationship=False)
-        return IterableOperator(operator=operator, expand_input=expand_input)
+    def iterate(self, **mapped_kwargs: OperatorExpandArgument) -> MappedOperator:
+        return self.partition(size=0).iterate(**mapped_kwargs)
 
     def iterate_kwargs(
         self, kwargs: OperatorExpandKwargsArgument, *, strict: bool = True
-    ) -> IterableOperator:
-        if isinstance(kwargs, Sequence):
-            for item in kwargs:
-                if not isinstance(item, (XComArg, Mapping)):
-                    raise TypeError(f"expected XComArg or list[dict], not {type(kwargs).__name__}")
-        elif not isinstance(kwargs, XComArg):
-            raise TypeError(f"expected XComArg or list[dict], not {type(kwargs).__name__}")
-        from airflow.sdk.definitions.iterableoperator import IterableOperator
-
-        expand_input = ListOfDictsExpandInput(kwargs)
-        operator = self._expand(expand_input, strict=strict, apply_upstream_relationship=False)
-        return IterableOperator(operator=operator, expand_input=expand_input)
-
-    def _expand(
-        self, expand_input: ExpandInput, *, strict: bool, apply_upstream_relationship: bool = True
     ) -> MappedOperator:
-        from airflow.providers.standard.operators.empty import EmptyOperator
-        from airflow.sdk import BaseSensorOperator
-        from airflow.sdk.bases.skipmixin import SkipMixin
+        return self.partition(size=0).iterate_kwargs(kwargs, strict=strict)
 
-        self._expand_called = True
-        ensure_xcomarg_return_value(expand_input.value)
+    def partition(self, size: int) -> PartitionedOperator:
+        """Return a PartitionedOperator for partitioned mapping."""
+        from airflow.sdk.definitions.partitionedoperator import PartitionedOperator
 
-        partial_kwargs = self.kwargs.copy()
-        task_id = partial_kwargs.pop("task_id")
-        dag = partial_kwargs.pop("dag")
-        task_group = partial_kwargs.pop("task_group")
-        start_date = partial_kwargs.pop("start_date", None)
-        end_date = partial_kwargs.pop("end_date", None)
-        start_from_trigger = (
-            partial_kwargs["start_from_trigger"]
-            if "start_from_trigger" in partial_kwargs
-            else getattr(self.operator_class, "start_from_trigger", False)
-        )
-        start_trigger_args = (
-            partial_kwargs["start_trigger_args"]
-            if "start_trigger_args" in partial_kwargs
-            else getattr(self.operator_class, "start_trigger_args", None)
-        )
-
-        try:
-            operator_name = self.operator_class.custom_operator_name  # type: ignore
-        except AttributeError:
-            operator_name = self.operator_class.__name__
-
-        op = MappedOperator(
-            operator_class=self.operator_class,
-            expand_input=expand_input,
-            partial_kwargs=partial_kwargs,
-            task_id=task_id,
-            params=self.params,
-            operator_extra_links=self.operator_class.operator_extra_links,
-            template_ext=self.operator_class.template_ext,
-            template_fields=self.operator_class.template_fields,
-            template_fields_renderers=self.operator_class.template_fields_renderers,
-            ui_color=self.operator_class.ui_color,
-            ui_fgcolor=self.operator_class.ui_fgcolor,
-            is_empty=issubclass(self.operator_class, EmptyOperator),
-            is_sensor=issubclass(self.operator_class, BaseSensorOperator),
-            can_skip_downstream=issubclass(self.operator_class, SkipMixin),
-            task_module=self.operator_class.__module__,
-            task_type=self.operator_class.__name__,
-            operator_name=operator_name,
-            dag=dag,
-            task_group=task_group,
-            start_date=start_date,
-            end_date=end_date,
-            disallow_kwargs_override=strict,
-            # For classic operators, this points to expand_input because kwargs
-            # to BaseOperator.expand() contribute to operator arguments.
-            expand_input_attr="expand_input",
-            # TODO: Move these to task SDK's BaseOperator and remove getattr
-            start_trigger_args=start_trigger_args,
-            start_from_trigger=start_from_trigger,
-        )
-        return op
+        return PartitionedOperator(operator_partial=self, size=size)
 
 
 @attrs.define(

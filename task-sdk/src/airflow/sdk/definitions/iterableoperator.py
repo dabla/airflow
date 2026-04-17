@@ -20,7 +20,7 @@ from __future__ import annotations
 import asyncio
 import os
 from collections import deque
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from concurrent.futures import Future
 from itertools import chain
 from typing import TYPE_CHECKING, Any
@@ -52,7 +52,7 @@ from airflow.sdk.execution_time.task_runner import MappedTaskInstance
 if TYPE_CHECKING:
     import jinja2
 
-    from airflow.sdk.definitions._internal.expandinput import ExpandInput
+    from airflow.sdk.definitions._internal.expandinput import ExpandInput, PartitionedExpandInput
     from airflow.sdk.definitions.context import Context
     from airflow.sdk.definitions.mappedoperator import MappedOperator
 
@@ -124,6 +124,7 @@ class IterableOperator(BaseOperator):
         self._operator = operator
         self.expand_input = expand_input
         self.partial_kwargs = operator.partial_kwargs or {}
+        self.partial_kwargs.pop("partition_size", None)
         self.max_workers = self.partial_kwargs.pop("task_concurrency", None) or os.cpu_count() or 1
         self._number_of_tasks: int = 0
         XComArg.apply_upstream_relationship(self, self.expand_input.value)
@@ -371,3 +372,45 @@ class IterableOperator(BaseOperator):
             if index in failed_tasks
         )
         return self._run_tasks(context=context, tasks=tasks)
+
+
+class MappedIterableOperator(MappedOperator):
+    """
+    A thin wrapper around an existing MappedOperator that augments
+    its behavior (specifically unmap) without breaking Airflow internals.
+
+    This works by reusing the delegate's internal state instead of
+    reinitializing MappedOperator.
+    """
+
+    def __init__(
+        self,
+        mapped_operator: MappedOperator,
+        expand_input: ExpandInput,
+        partition_size: int,
+    ):
+        self.delegate = mapped_operator
+        self.delegate.partial_kwargs["partition_size"] = partition_size
+        self.expand_input = expand_input
+        self._apply_upstream_relationship = True
+        self.__attrs_post_init__()
+
+    def __getattr__(self, name):
+        return getattr(self.delegate, name)
+
+    def prepare_for_execution(self) -> MappedOperator:
+        return self
+
+    @property
+    def partition_size(self) -> int:
+        return self.partial_kwargs.get("partition_size", 0)
+
+    def __repr__(self):
+        return f"<MappedIterable({self.task_type}): {self.task_id}>"
+
+    def unmap(self, resolve: Mapping[str, Any]) -> BaseOperator:
+        return IterableOperator(
+            operator=self.delegate,
+            expand_input=PartitionedExpandInput(self.expand_input, self.partition_size),
+            _airflow_from_mapped=True,
+        )

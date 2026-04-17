@@ -117,6 +117,29 @@ class DecoratedExpandInput(ExpandInput):
         return self.delegate.resolve(context)
 
 
+class PartitionedExpandInput(DecoratedExpandInput):
+    """
+    ExpandInput that partitions another ExpandInput into N chunks.
+
+    This affects mapping cardinality, NOT resolve-time behavior.
+    """
+
+    EXPAND_INPUT_TYPE: ClassVar[str] = "partitioned"
+
+    def __init__(self, expand_input: ExpandInput, size: int):
+        super().__init__(expand_input=expand_input)
+        self.size = size
+
+    def iter_values(self, context: Mapping[str, Any]) -> Iterable[dict]:
+        data = list(self.delegate.iter_values(context))
+        chunk_size = len(data) // self.size
+        map_index = context["ti"].map_index
+        start = map_index * chunk_size
+        end = start + chunk_size
+        partitioned_data = data[start:end]
+        return partitioned_data
+
+
 @attrs.define(kw_only=True)
 class MappedArgument(ResolveMixin):
     """
