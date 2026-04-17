@@ -144,7 +144,6 @@ class TestIterableOperator:
             dag=dag,
         )
 
-    @pytest.fixture(autouse=True)
     @pytest.mark.parametrize(
         ("actual", "expected"),
         [
@@ -175,7 +174,6 @@ class TestIterableOperator:
             result = list(iterable_op.expand_input.iter_values({}))
             assert result == []
 
-    @pytest.fixture(autouse=True)
     @pytest.mark.parametrize(
         ("actual", "expected"),
         [
