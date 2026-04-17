@@ -97,6 +97,7 @@ class TestIterableOperator:
         task_id: str = "my_task",
         retries: int = DEFAULT_RETRIES,
         do_xcom_push: bool = True,
+        task_concurrency: int | None = None,
     ) -> MappedOperator:
         """
         Create a MappedOperator and assign it to a DAG.
@@ -107,7 +108,7 @@ class TestIterableOperator:
         :param do_xcom_push: Whether to push XCom (default True)
         """
         return MockOperator.partial(
-            task_id=task_id, dag=dag, retries=retries, do_xcom_push=do_xcom_push
+            task_id=task_id, dag=dag, retries=retries, do_xcom_push=do_xcom_push, task_concurrency=task_concurrency,
         )._expand(
             expand_input,
             strict=True,
@@ -126,12 +127,11 @@ class TestIterableOperator:
     ) -> IterableOperator:
         """Create an IterableOperator with a MappedOperator and ExpandInput."""
         mapped_op = cls.create_mapped_operator(
-            dag=dag, expand_input=expand_input, task_id=task_id, retries=retries, do_xcom_push=do_xcom_push
+            dag=dag, expand_input=expand_input, task_id=task_id, retries=retries, do_xcom_push=do_xcom_push, task_concurrency=task_concurrency,
         )
         return IterableOperator(
             operator=mapped_op,
             expand_input=expand_input,
-            task_concurrency=task_concurrency,
             dag=dag,
         )
 

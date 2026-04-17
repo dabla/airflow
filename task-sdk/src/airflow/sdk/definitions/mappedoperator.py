@@ -225,10 +225,7 @@ class OperatorPartial:
         # to False to skip the checks on execution.
         expand_input = DictOfListsExpandInput(mapped_kwargs)
         operator = self._expand(expand_input, strict=False, apply_upstream_relationship=False)
-        task_concurrency = operator.partial_kwargs.pop("task_concurrency", None)
-        return IterableOperator(
-            operator=operator, expand_input=expand_input, task_concurrency=task_concurrency
-        )
+        return IterableOperator(operator=operator, expand_input=expand_input)
 
     def iterate_kwargs(
         self, kwargs: OperatorExpandKwargsArgument, *, strict: bool = True
@@ -243,10 +240,7 @@ class OperatorPartial:
 
         expand_input = ListOfDictsExpandInput(kwargs)
         operator = self._expand(expand_input, strict=strict, apply_upstream_relationship=False)
-        task_concurrency = operator.partial_kwargs.pop("task_concurrency", None)
-        return IterableOperator(
-            operator=operator, expand_input=expand_input, task_concurrency=task_concurrency
-        )
+        return IterableOperator(operator=operator, expand_input=expand_input)
 
     def _expand(
         self, expand_input: ExpandInput, *, strict: bool, apply_upstream_relationship: bool = True
