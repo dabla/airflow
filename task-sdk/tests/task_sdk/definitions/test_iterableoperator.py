@@ -97,20 +97,22 @@ class TestIterableOperator:
     @classmethod
     def create_mapped_operator(
         cls,
+        dag: DAG,
         expand_input: ExpandInput,
         task_id: str = "my_task",
         retries: int = DEFAULT_RETRIES,
         do_xcom_push: bool = True,
     ) -> MappedOperator:
         """
-        Create a MappedOperator without adding it to a DAG.
+        Create a MappedOperator and assign it to a DAG.
 
         :param expand_input: The input to expand
+        :param dag: The DAG to assign the operator to
         :param task_id: Task ID for the operator
         :param do_xcom_push: Whether to push XCom (default True)
         """
         return MockOperator.partial(
-            task_id=task_id, dag=None, retries=retries, do_xcom_push=do_xcom_push
+            task_id=task_id, dag=dag, retries=retries, do_xcom_push=do_xcom_push
         )._expand(
             expand_input,
             strict=True,
@@ -129,7 +131,7 @@ class TestIterableOperator:
     ) -> IterableOperator:
         """Create an IterableOperator with a MappedOperator and ExpandInput."""
         mapped_op = cls.create_mapped_operator(
-            expand_input, task_id=task_id, retries=retries, do_xcom_push=do_xcom_push
+            dag=dag, expand_input=expand_input, task_id=task_id, retries=retries, do_xcom_push=do_xcom_push
         )
         return IterableOperator(
             operator=mapped_op,
