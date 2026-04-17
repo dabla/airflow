@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import contextlib
 import datetime
+import json
 import operator
 import os
 import pathlib
@@ -2749,6 +2750,7 @@ def test_defer_task_serializes_non_json_next_kwargs(create_task_instance):
     )
 
     assert ti.defer_task(session=session)
+    json.dumps(ti.next_kwargs)
     assert deserialize(ti.next_kwargs) == {"start_at": start_at, "delay": delay}
 
 
