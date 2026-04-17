@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import copy
+import uuid
 from typing import TYPE_CHECKING
 
 try:
@@ -89,11 +90,6 @@ def mock_xcom_get_one(monkeypatch: pytest.MonkeyPatch):
 
 
 class TestIterableOperator:
-    @classmethod
-    def get_dag(cls):
-        """Create a fresh DAG for each test."""
-        return DAG(dag_id="test_dag", start_date=timezone.utcnow())
-
     @classmethod
     def create_mapped_operator(
         cls,
@@ -179,153 +175,153 @@ class TestIterableOperator:
             ({"a": [1, 2]}, [{"a": 1}, {"a": 2}]),  # Convert generator to list for testing
         ],
     )
-    def test_dict_of_lists_expand_input_iter_values(self, actual, expected):
+    def test_dict_of_lists_expand_input_iter_values(self, dag_maker, actual, expected):
         """Test IterableOperator with DictOfListsExpandInput expand_input."""
-        dag = self.get_dag()
-        expand_input = DictOfListsExpandInput(actual)
-        iterable_op = self.create_iterable_operator(dag, expand_input)
+        with dag_maker(dag_id="test_dag") as dag:
+            expand_input = DictOfListsExpandInput(actual)
+            iterable_op = self.create_iterable_operator(dag, expand_input)
 
-        result = list(iterable_op.expand_input.iter_values({}))
-        assert result == expected
+            result = list(iterable_op.expand_input.iter_values({}))
+            assert result == expected
 
-    def test_task_type(self):
+    def test_task_type(self, dag_maker):
         """Test that IterableOperator correctly reports task_type."""
-        dag = self.get_dag()
-        expand_input = ListOfDictsExpandInput([{"a": 1}])
-        iterable_op = self.create_iterable_operator(dag, expand_input)
+        with dag_maker(dag_id="test_dag") as dag:
+            expand_input = ListOfDictsExpandInput([{"a": 1}])
+            iterable_op = self.create_iterable_operator(dag, expand_input)
 
-        assert isinstance(iterable_op, IterableOperator)
-        assert iterable_op.task_type == "MappedOperator"
+            assert isinstance(iterable_op, IterableOperator)
+            assert iterable_op.task_type == "MappedOperator"
 
-    def test_task_id(self):
+    def test_task_id(self, dag_maker):
         """Test that IterableOperator inherits task_id from operator."""
-        dag = self.get_dag()
-        task_id = "my_task"
-        expand_input = ListOfDictsExpandInput([{"a": 1}])
-        iterable_op = self.create_iterable_operator(dag, expand_input, task_id=task_id)
+        with dag_maker(dag_id="test_dag") as dag:
+            task_id = "my_task"
+            expand_input = ListOfDictsExpandInput([{"a": 1}])
+            iterable_op = self.create_iterable_operator(dag, expand_input, task_id=task_id)
 
-        assert iterable_op.task_id == task_id
+            assert iterable_op.task_id == task_id
 
-    def test_with_task_concurrency(self):
+    def test_with_task_concurrency(self, dag_maker):
         """Test that IterableOperator respects task_concurrency parameter."""
-        dag = self.get_dag()
-        expand_input = ListOfDictsExpandInput([{"a": 1}])
-        iterable_op = self.create_iterable_operator(dag, expand_input, task_concurrency=4)
+        with dag_maker(dag_id="test_dag") as dag:
+            expand_input = ListOfDictsExpandInput([{"a": 1}])
+            iterable_op = self.create_iterable_operator(dag, expand_input, task_concurrency=4)
 
-        assert iterable_op.max_workers == 4
+            assert iterable_op.max_workers == 4
 
-    def test_expand_input_stored(self):
+    def test_expand_input_stored(self, dag_maker):
         """Test that IterableOperator stores expand_input correctly."""
-        dag = self.get_dag()
-        expand_input_data = ListOfDictsExpandInput([{"a": 1}, {"a": 2}])
-        iterable_op = self.create_iterable_operator(dag, expand_input_data)
+        with dag_maker(dag_id="test_dag") as dag:
+            expand_input_data = ListOfDictsExpandInput([{"a": 1}, {"a": 2}])
+            iterable_op = self.create_iterable_operator(dag, expand_input_data)
 
-        assert iterable_op.expand_input is expand_input_data
-        assert isinstance(iterable_op.expand_input, (ListOfDictsExpandInput, DictOfListsExpandInput))
+            assert iterable_op.expand_input is expand_input_data
+            assert isinstance(iterable_op.expand_input, (ListOfDictsExpandInput, DictOfListsExpandInput))
 
-    def test_partial_kwargs_stored(self):
+    def test_partial_kwargs_stored(self, dag_maker):
         """Test that IterableOperator stores partial_kwargs from operator."""
-        dag = self.get_dag()
-        expand_input = ListOfDictsExpandInput([{"a": 1}])
-        iterable_op = self.create_iterable_operator(dag, expand_input)
+        with dag_maker(dag_id="test_dag") as dag:
+            expand_input = ListOfDictsExpandInput([{"a": 1}])
+            iterable_op = self.create_iterable_operator(dag, expand_input)
 
-        assert hasattr(iterable_op, "partial_kwargs")
-        assert isinstance(iterable_op.partial_kwargs, dict)
+            assert hasattr(iterable_op, "partial_kwargs")
+            assert isinstance(iterable_op.partial_kwargs, dict)
 
-    def test_execute_list_of_dicts(self, mock_xcom_get_one):
+    def test_execute_list_of_dicts(self, dag_maker, mock_xcom_get_one):
         """Test executing IterableOperator with ListOfDictsExpandInput."""
-        dag = self.get_dag()
-        expand_input = ListOfDictsExpandInput([{"arg1": 1}, {"arg1": 2}])
-        iterable_op = self.create_iterable_operator(dag, expand_input, task_id="exec_list_of_dicts")
+        with dag_maker(dag_id="test_dag") as dag:
+            expand_input = ListOfDictsExpandInput([{"arg1": 1}, {"arg1": 2}])
+            iterable_op = self.create_iterable_operator(dag, expand_input, task_id="exec_list_of_dicts")
 
-        context = mock_context(task=iterable_op)
-        mock_xcom_get_one(context)
-        result = iterable_op.execute(context=context)
-        materialized = list(result)
-        assert materialized == [(1, None, None), (2, None, None)]
+            context = mock_context(task=iterable_op)
+            mock_xcom_get_one(context)
+            result = iterable_op.execute(context=context)
+            materialized = list(result)
+            assert materialized == [(1, None, None), (2, None, None)]
 
-    def test_execute_dict_of_lists(self, mock_xcom_get_one):
+    def test_execute_dict_of_lists(self, dag_maker, mock_xcom_get_one):
         """Test executing IterableOperator with DictOfListsExpandInput."""
-        dag = self.get_dag()
-        expand_input = DictOfListsExpandInput({"arg1": [1, 2, 3]})
-        iterable_op = self.create_iterable_operator(dag, expand_input, task_id="exec_dict_of_lists")
+        with dag_maker(dag_id="test_dag") as dag:
+            expand_input = DictOfListsExpandInput({"arg1": [1, 2, 3]})
+            iterable_op = self.create_iterable_operator(dag, expand_input, task_id="exec_dict_of_lists")
 
-        context = mock_context(task=iterable_op)
-        mock_xcom_get_one(context)
-        result = iterable_op.execute(context=context)
-        materialized = list(result)
-        assert materialized == [(1, None, None), (2, None, None), (3, None, None)]
+            context = mock_context(task=iterable_op)
+            mock_xcom_get_one(context)
+            result = iterable_op.execute(context=context)
+            materialized = list(result)
+            assert materialized == [(1, None, None), (2, None, None), (3, None, None)]
 
-    def test_execute_empty_list_of_dicts(self, mock_xcom_get_one):
+    def test_execute_empty_list_of_dicts(self, dag_maker, mock_xcom_get_one):
         """Test executing IterableOperator with empty ListOfDictsExpandInput."""
-        dag = self.get_dag()
-        expand_input = ListOfDictsExpandInput([])
-        iterable_op = self.create_iterable_operator(dag, expand_input, task_id="exec_empty")
+        with dag_maker(dag_id="test_dag") as dag:
+            expand_input = ListOfDictsExpandInput([])
+            iterable_op = self.create_iterable_operator(dag, expand_input, task_id="exec_empty")
 
-        context = mock_context(task=iterable_op)
-        mock_xcom_get_one(context)
-        result = iterable_op.execute(context=context)
-        materialized = list(result)
-        assert materialized == []
+            context = mock_context(task=iterable_op)
+            mock_xcom_get_one(context)
+            result = iterable_op.execute(context=context)
+            materialized = list(result)
+            assert materialized == []
 
-    def test_execute_multiple_key_dict_of_lists(self, mock_xcom_get_one):
+    def test_execute_multiple_key_dict_of_lists(self, dag_maker, mock_xcom_get_one):
         """Test executing IterableOperator with multiple keys in DictOfListsExpandInput."""
-        dag = self.get_dag()
-        expand_input = DictOfListsExpandInput({"arg1": [1, 2], "arg2": [10, 20], "arg3": ["x", "y"]})
-        iterable_op = self.create_iterable_operator(dag, expand_input, task_id="exec_multi_key")
+        with dag_maker(dag_id="test_dag") as dag:
+            expand_input = DictOfListsExpandInput({"arg1": [1, 2], "arg2": [10, 20], "arg3": ["x", "y"]})
+            iterable_op = self.create_iterable_operator(dag, expand_input, task_id="exec_multi_key")
 
-        context = mock_context(task=iterable_op)
-        mock_xcom_get_one(context)
-        result = iterable_op.execute(context=context)
-        materialized = list(result)
-        assert materialized == [(1, 10, "x"), (2, 20, "y")]
+            context = mock_context(task=iterable_op)
+            mock_xcom_get_one(context)
+            result = iterable_op.execute(context=context)
+            materialized = list(result)
+            assert materialized == [(1, 10, "x"), (2, 20, "y")]
 
-    def test_execute_with_task_concurrency_setting(self, mock_xcom_get_one):
+    def test_execute_with_task_concurrency_setting(self, dag_maker, mock_xcom_get_one):
         """Test executing IterableOperator with task_concurrency parameter."""
-        dag = self.get_dag()
-        expand_input = ListOfDictsExpandInput([{"arg1": 1}, {"arg1": 2}, {"arg1": 3}])
-        iterable_op = self.create_iterable_operator(
-            dag, expand_input, task_id="exec_concurrency", task_concurrency=2
-        )
+        with dag_maker(dag_id="test_dag") as dag:
+            expand_input = ListOfDictsExpandInput([{"arg1": 1}, {"arg1": 2}, {"arg1": 3}])
+            iterable_op = self.create_iterable_operator(
+                dag, expand_input, task_id="exec_concurrency", task_concurrency=2
+            )
 
-        context = mock_context(task=iterable_op)
-        mock_xcom_get_one(context)
-        result = iterable_op.execute(context=context)
-        materialized = list(result)
-        assert materialized == [(1, None, None), (2, None, None), (3, None, None)]
-        assert iterable_op.max_workers == 2
+            context = mock_context(task=iterable_op)
+            mock_xcom_get_one(context)
+            result = iterable_op.execute(context=context)
+            materialized = list(result)
+            assert materialized == [(1, None, None), (2, None, None), (3, None, None)]
+            assert iterable_op.max_workers == 2
 
-    def test_execute_all_parameters(self, mock_xcom_get_one):
+    def test_execute_all_parameters(self, dag_maker, mock_xcom_get_one):
         """Test executing IterableOperator with all arg1, arg2, arg3 parameters."""
-        dag = self.get_dag()
-        expand_input = ListOfDictsExpandInput(
-            [
-                {"arg1": 1, "arg2": 10, "arg3": 100},
-                {"arg1": 2, "arg2": 20, "arg3": 200},
-            ]
-        )
-        iterable_op = self.create_iterable_operator(dag, expand_input, task_id="exec_all_args")
+        with dag_maker(dag_id="test_dag") as dag:
+            expand_input = ListOfDictsExpandInput(
+                [
+                    {"arg1": 1, "arg2": 10, "arg3": 100},
+                    {"arg1": 2, "arg2": 20, "arg3": 200},
+                ]
+            )
+            iterable_op = self.create_iterable_operator(dag, expand_input, task_id="exec_all_args")
 
-        context = mock_context(task=iterable_op)
-        mock_xcom_get_one(context)
-        result = iterable_op.execute(context=context)
-        materialized = list(result)
-        assert materialized == [(1, 10, 100), (2, 20, 200)]
+            context = mock_context(task=iterable_op)
+            mock_xcom_get_one(context)
+            result = iterable_op.execute(context=context)
+            materialized = list(result)
+            assert materialized == [(1, 10, 100), (2, 20, 200)]
 
-    def test_execute_with_do_xcom_push_false(self):
+    def test_execute_with_do_xcom_push_false(self, dag_maker):
         """Test executing IterableOperator when do_xcom_push is False."""
-        dag = self.get_dag()
-        expand_input = ListOfDictsExpandInput([{"arg1": 1}, {"arg1": 2}])
-        iterable_op = self.create_iterable_operator(
-            dag, expand_input, task_id="no_xcom_push", do_xcom_push=False
-        )
+        with dag_maker(dag_id="test_dag") as dag:
+            expand_input = ListOfDictsExpandInput([{"arg1": 1}, {"arg1": 2}])
+            iterable_op = self.create_iterable_operator(
+                dag, expand_input, task_id="no_xcom_push", do_xcom_push=False
+            )
 
-        context = mock_context(task=iterable_op)
-        result = iterable_op.execute(context=context)
+            context = mock_context(task=iterable_op)
+            result = iterable_op.execute(context=context)
 
-        assert result is None
+            assert result is None
 
-    def test_execute_with_failed_tasks_but_no_retries(self, mock_xcom_get_one):
+    def test_execute_with_failed_tasks_but_no_retries(self, dag_maker, mock_xcom_get_one):
         """Test executing IterableOperator where tasks fail but no retries are available.
 
         This test verifies that:
@@ -333,27 +329,27 @@ class TestIterableOperator:
         2. When no retries are configured (retries=0), the exception propagates and is not retried
         3. The BaseExceptionGroup is raised containing the task failure
         """
-        dag = self.get_dag()
-        expand_input = ListOfDictsExpandInput(
-            [
-                {"arg1": 1, "arg2": 10},
-                {"arg1": 2, "arg2": 20, "fail_on_first_attempt": True},
-                {"arg1": 3, "arg2": 30},
-            ]
-        )
-        iterable_op = self.create_iterable_operator(
-            dag,
-            expand_input,
-            task_id="exec_with_failures",
-            retries=0,
-        )
+        with dag_maker(dag_id="test_dag") as dag:
+            expand_input = ListOfDictsExpandInput(
+                [
+                    {"arg1": 1, "arg2": 10},
+                    {"arg1": 2, "arg2": 20, "fail_on_first_attempt": True},
+                    {"arg1": 3, "arg2": 30},
+                ]
+            )
+            iterable_op = self.create_iterable_operator(
+                dag,
+                expand_input,
+                task_id="exec_with_failures",
+                retries=0,
+            )
 
-        context = mock_context(task=iterable_op)
-        mock_xcom_get_one(context)
-        with pytest.raises(BaseExceptionGroup):
-            iterable_op.execute(context=context)
+            context = mock_context(task=iterable_op)
+            mock_xcom_get_one(context)
+            with pytest.raises(BaseExceptionGroup):
+                iterable_op.execute(context=context)
 
-    def test_execute_with_failed_tasks_and_expired_reschedule_date(self, mock_xcom_get_one):
+    def test_execute_with_failed_tasks_and_expired_reschedule_date(self, dag_maker, mock_xcom_get_one):
         """Test executing IterableOperator where certain map_index tasks fail on first attempt and are retried.
 
         This test verifies that:
@@ -361,25 +357,25 @@ class TestIterableOperator:
         2. Failed tasks are retried immediately without deferring (since reschedule_date is expired)
         3. Retried tasks succeed on subsequent attempts (try_number > 0) and produce the expected output
         """
-        dag = self.get_dag()
-        expand_input = ListOfDictsExpandInput(
-            [
-                {"arg1": 1, "arg2": 10},
-                {"arg1": 2, "arg2": 20, "fail_on_first_attempt": True},
-                {"arg1": 3, "arg2": 30},
-            ]
-        )
-        iterable_op = self.create_iterable_operator(
-            dag,
-            expand_input,
-            task_id="exec_with_failures",
-            retries=1,
-        )
+        with dag_maker(dag_id="test_dag") as dag:
+            expand_input = ListOfDictsExpandInput(
+                [
+                    {"arg1": 1, "arg2": 10},
+                    {"arg1": 2, "arg2": 20, "fail_on_first_attempt": True},
+                    {"arg1": 3, "arg2": 30},
+                ]
+            )
+            iterable_op = self.create_iterable_operator(
+                dag,
+                expand_input,
+                task_id="exec_with_failures",
+                retries=1,
+            )
 
-        context = mock_context(task=iterable_op)
-        mock_xcom_get_one(context)
-        result = iterable_op.execute(context=context)
-        materialized = list(result)
+            context = mock_context(task=iterable_op)
+            mock_xcom_get_one(context)
+            result = iterable_op.execute(context=context)
+            materialized = list(result)
 
-        assert len(materialized) == 3
-        assert materialized == [(1, 10, None), (2, 20, None), (3, 30, None)]
+            assert len(materialized) == 3
+            assert materialized == [(1, 10, None), (2, 20, None), (3, 30, None)]
