@@ -100,13 +100,14 @@ The minimum Apache Airflow version supported by this provider distribution is ``
 ==========================================  ======================================
 PIP package                                 Version required
 ==========================================  ======================================
-``aiofiles``                                ``>=23.2.0``
+``aiofiles``                                ``>=24.1.0``
 ``apache-airflow``                          ``>=2.11.0``
 ``apache-airflow-providers-ssh``            ``>=4.0.0``
 ``apache-airflow-providers-common-compat``  ``>=1.12.0``
 ``paramiko``                                ``>=3.5.1,<4.0.0``
 ``asyncssh``                                ``>=2.12.0; python_version < "3.14"``
 ``asyncssh``                                ``>=2.22.0; python_version >= "3.14"``
+``types-aiofiles``                          ``>=25.1.0.20260409``
 ==========================================  ======================================
 
 Cross provider package dependencies
