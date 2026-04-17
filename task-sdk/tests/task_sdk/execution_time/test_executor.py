@@ -347,7 +347,7 @@ class TestTaskExecutor:
         ],
     )
     @mock.patch("airflow.sdk.definitions._internal.templater.SandboxedEnvironment", autospec=True)
-    def test_exit_retry_boundary(self, try_number, max_tries, should_fail, mock_jinja_env):
+    def test_exit_retry_boundary(self, mock_jinja_env, try_number, max_tries, should_fail):
         """Exhaustive boundary checks for the retry/fail decision in __exit__."""
         ti = _make_mapped_ti(try_number=try_number, max_tries=max_tries)
         if should_fail:
