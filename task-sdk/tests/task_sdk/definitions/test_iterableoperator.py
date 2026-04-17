@@ -108,7 +108,11 @@ class TestIterableOperator:
         :param do_xcom_push: Whether to push XCom (default True)
         """
         return MockOperator.partial(
-            task_id=task_id, dag=dag, retries=retries, do_xcom_push=do_xcom_push, task_concurrency=task_concurrency,
+            task_id=task_id,
+            dag=dag,
+            retries=retries,
+            do_xcom_push=do_xcom_push,
+            task_concurrency=task_concurrency,
         )._expand(
             expand_input,
             strict=True,
@@ -127,7 +131,12 @@ class TestIterableOperator:
     ) -> IterableOperator:
         """Create an IterableOperator with a MappedOperator and ExpandInput."""
         mapped_op = cls.create_mapped_operator(
-            dag=dag, expand_input=expand_input, task_id=task_id, retries=retries, do_xcom_push=do_xcom_push, task_concurrency=task_concurrency,
+            dag=dag,
+            expand_input=expand_input,
+            task_id=task_id,
+            retries=retries,
+            do_xcom_push=do_xcom_push,
+            task_concurrency=task_concurrency,
         )
         return IterableOperator(
             operator=mapped_op,
