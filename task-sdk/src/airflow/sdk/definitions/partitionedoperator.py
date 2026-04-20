@@ -104,26 +104,6 @@ class PartitionedOperator:
     def _expand_called(self, value: bool) -> None:
         self.operator_partial._expand_called = value
 
-    def expand(self, **mapped_kwargs: OperatorExpandArgument) -> MappedOperator:
-        if not mapped_kwargs:
-            raise TypeError("no arguments to expand against")
-        validate_mapping_kwargs(self.operator_class, "expand", mapped_kwargs)
-        prevent_duplicates(self.kwargs, mapped_kwargs, fail_reason="unmappable or already specified")
-        # Since the input is already checked at parse time, we can set strict
-        # to False to skip the checks on execution.
-        return self._expand(DictOfListsExpandInput(mapped_kwargs), strict=False)
-
-    def expand_kwargs(self, kwargs: OperatorExpandKwargsArgument, *, strict: bool = True) -> MappedOperator:
-        from airflow.sdk.definitions.xcom_arg import XComArg
-
-        if isinstance(kwargs, Sequence):
-            for item in kwargs:
-                if not isinstance(item, (XComArg, Mapping)):
-                    raise TypeError(f"expected XComArg or list[dict], not {type(kwargs).__name__}")
-        elif not isinstance(kwargs, XComArg):
-            raise TypeError(f"expected XComArg or list[dict], not {type(kwargs).__name__}")
-        return self._expand(ListOfDictsExpandInput(kwargs), strict=strict)
-
     def iterate(self, **mapped_kwargs: OperatorExpandArgument) -> IterableOperator | MappedIterableOperator:
         if not mapped_kwargs:
             raise TypeError("no arguments to iterate against")
@@ -280,49 +260,6 @@ class DecoratedPartitionedOperator(PartitionedOperator):
 
     def _validate_arg_names(self, func: ValidationSource, kwargs: dict[str, Any]):
         self.operator_partial._validate_arg_names(func, kwargs)
-
-    def expand(self, **map_kwargs: OperatorExpandArgument) -> XComArg:
-        if self.kwargs.get("trigger_rule") == TriggerRule.ALWAYS and any(
-            [isinstance(expanded, XComArg) for expanded in map_kwargs.values()]
-        ):
-            raise ValueError(
-                "Task-generated mapping within a task using 'expand' is not allowed with trigger rule 'always'."
-            )
-        if not map_kwargs:
-            raise TypeError("no arguments to expand against")
-        self._validate_arg_names("expand", map_kwargs)
-        prevent_duplicates(self.kwargs, map_kwargs, fail_reason="mapping already partial")
-        # Since the input is already checked at parse time, we can set strict
-        # to False to skip the checks on execution.
-        if self.is_teardown:
-            if "trigger_rule" in self.kwargs:
-                raise ValueError("Trigger rule not configurable for teardown tasks.")
-            self.kwargs.update(trigger_rule=TriggerRule.ALL_DONE_SETUP_SUCCESS)
-        return XComArg(operator=self._expand(DictOfListsExpandInput(map_kwargs), strict=False))
-
-    def expand_kwargs(self, kwargs: OperatorExpandKwargsArgument, *, strict: bool = True) -> XComArg:
-        if (
-            self.kwargs.get("trigger_rule") == TriggerRule.ALWAYS
-            and not isinstance(kwargs, XComArg)
-            and any(
-                [
-                    isinstance(v, XComArg)
-                    for kwarg in kwargs
-                    if not isinstance(kwarg, XComArg)
-                    for v in kwarg.values()
-                ]
-            )
-        ):
-            raise ValueError(
-                "Task-generated mapping within a task using 'expand_kwargs' is not allowed with trigger rule 'always'."
-            )
-        if isinstance(kwargs, Sequence):
-            for item in kwargs:
-                if not isinstance(item, (XComArg, Mapping)):
-                    raise TypeError(f"expected XComArg or list[dict], not {type(kwargs).__name__}")
-        elif not isinstance(kwargs, XComArg):
-            raise TypeError(f"expected XComArg or list[dict], not {type(kwargs).__name__}")
-        return XComArg(operator=self._expand(ListOfDictsExpandInput(kwargs), strict=strict))
 
     def iterate(self, **map_kwargs: OperatorExpandArgument) -> XComArg:
         if self.kwargs.get("trigger_rule") == TriggerRule.ALWAYS and any(

@@ -47,6 +47,8 @@ from airflow.sdk.definitions._internal.abstractoperator import (
     TaskStateChangeCallbackAttrType,
 )
 from airflow.sdk.definitions._internal.expandinput import (
+    DictOfListsExpandInput,
+    ListOfDictsExpandInput,
     is_mappable,
 )
 from airflow.sdk.definitions._internal.types import NOTSET
@@ -193,10 +195,27 @@ class OperatorPartial:
             warnings.warn(f"Task {task_id} was never mapped!", category=UserWarning, stacklevel=1)
 
     def expand(self, **mapped_kwargs: OperatorExpandArgument) -> MappedOperator:
-        return self.partition(size=0).expand(**mapped_kwargs)
+        if not mapped_kwargs:
+            raise TypeError("no arguments to expand against")
+        validate_mapping_kwargs(self.operator_class, "expand", mapped_kwargs)
+        prevent_duplicates(self.kwargs, mapped_kwargs, fail_reason="unmappable or already specified")
+        # Since the input is already checked at parse time, we can set strict
+        # to False to skip the checks on execution.
+        return self._expand(DictOfListsExpandInput(mapped_kwargs), strict=False)
 
     def expand_kwargs(self, kwargs: OperatorExpandKwargsArgument, *, strict: bool = True) -> MappedOperator:
-        return self.partition(size=0).expand_kwargs(kwargs, strict=strict)
+        from airflow.sdk.definitions.xcom_arg import XComArg
+
+        if isinstance(kwargs, Sequence):
+            for item in kwargs:
+                if not isinstance(item, (XComArg, Mapping)):
+                    raise TypeError(f"expected XComArg or list[dict], not {type(kwargs).__name__}")
+        elif not isinstance(kwargs, XComArg):
+            raise TypeError(f"expected XComArg or list[dict], not {type(kwargs).__name__}")
+        return self._expand(ListOfDictsExpandInput(kwargs), strict=strict)
+
+    def _expand(self, expand_input: ExpandInput, *, strict: bool) -> MappedOperator:
+        return self.partition(size=0)._expand(expand_input, strict=strict)
 
     def iterate(self, **mapped_kwargs: OperatorExpandArgument) -> MappedOperator:
         return self.partition(size=0).iterate(**mapped_kwargs)

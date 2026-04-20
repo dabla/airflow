@@ -544,10 +544,51 @@ class _TaskDecorator(ExpandableFactory, Generic[FParams, FReturn, OperatorSubcla
         super()._validate_arg_names(func, kwargs)
 
     def expand(self, **map_kwargs: OperatorExpandArgument) -> XComArg:
-        return self.partition(size=0).expand(**map_kwargs)
+        if self.kwargs.get("trigger_rule") == TriggerRule.ALWAYS and any(
+            [isinstance(expanded, XComArg) for expanded in map_kwargs.values()]
+        ):
+            raise ValueError(
+                "Task-generated mapping within a task using 'expand' is not allowed with trigger rule 'always'."
+            )
+        if not map_kwargs:
+            raise TypeError("no arguments to expand against")
+        self._validate_arg_names("expand", map_kwargs)
+        prevent_duplicates(self.kwargs, map_kwargs, fail_reason="mapping already partial")
+        # Since the input is already checked at parse time, we can set strict
+        # to False to skip the checks on execution.
+        if self.is_teardown:
+            if "trigger_rule" in self.kwargs:
+                raise ValueError("Trigger rule not configurable for teardown tasks.")
+            self.kwargs.update(trigger_rule=TriggerRule.ALL_DONE_SETUP_SUCCESS)
+        return self._expand(DictOfListsExpandInput(map_kwargs), strict=False)
 
     def expand_kwargs(self, kwargs: OperatorExpandKwargsArgument, *, strict: bool = True) -> XComArg:
-        return self.partition(size=0).expand_kwargs(kwargs, strict=strict)
+        if (
+            self.kwargs.get("trigger_rule") == TriggerRule.ALWAYS
+            and not isinstance(kwargs, XComArg)
+            and any(
+            [
+                isinstance(v, XComArg)
+                for kwarg in kwargs
+                if not isinstance(kwarg, XComArg)
+                for v in kwarg.values()
+            ]
+        )
+        ):
+            raise ValueError(
+                "Task-generated mapping within a task using 'expand_kwargs' is not allowed with trigger rule 'always'."
+            )
+        if isinstance(kwargs, Sequence):
+            for item in kwargs:
+                if not isinstance(item, (XComArg, Mapping)):
+                    raise TypeError(f"expected XComArg or list[dict], not {type(kwargs).__name__}")
+        elif not isinstance(kwargs, XComArg):
+            raise TypeError(f"expected XComArg or list[dict], not {type(kwargs).__name__}")
+        return self._expand(ListOfDictsExpandInput(kwargs), strict=strict)
+
+    def _expand(self, expand_input: ExpandInput, *, strict: bool) -> XComArg:
+        operator = self.partition(size=0)._expand(expand_input, strict=strict)
+        return XComArg(operator=operator)
 
     def iterate(self, **mapped_kwargs: OperatorExpandArgument) -> XComArg:
         return self.partition(size=0).iterate(**mapped_kwargs)
