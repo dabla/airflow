@@ -274,9 +274,7 @@ class DecoratedPartitionedOperator(PartitionedOperator):
         operator = self._iterate(expand_input, strict=False, apply_upstream_relationship=False)
         return XComArg(operator=operator)
 
-    def iterate_kwargs(
-        self, kwargs: OperatorExpandKwargsArgument, *, strict: bool = True
-    ) -> XComArg:
+    def iterate_kwargs(self, kwargs: OperatorExpandKwargsArgument, *, strict: bool = True) -> XComArg:
         if (
             self.kwargs.get("trigger_rule") == TriggerRule.ALWAYS
             and not isinstance(kwargs, XComArg)
