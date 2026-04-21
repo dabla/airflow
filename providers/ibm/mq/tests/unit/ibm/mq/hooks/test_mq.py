@@ -17,6 +17,8 @@
 from __future__ import annotations
 
 import asyncio
+import threading
+from itertools import count
 from unittest import mock
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -166,8 +168,25 @@ class TestIBMMQHook:
 
     @patch("airflow.providers.ibm.mq.hooks.mq.asyncio.sleep", new_callable=AsyncMock)
     async def test_aconsume_retries_on_none_then_succeeds(self, mock_sleep, patch_sync_to_async):
+        counter = count()
+
+        def consume(
+            queue_name: str,
+            poll_interval: float,
+            stop_event: threading.Event,
+        ) -> str | None:
+            assert queue_name == "QUEUE1"
+            assert poll_interval == 0.1
+
+            if stop_event.is_set():
+                raise RuntimeError("Should not occur in this test!")
+
+            if next(counter) < 2:
+                return None
+            return "payload after retries"
+
         """When consume returns None, aconsume retries with backoff until a message arrives."""
-        with patch.object(self.hook, "consume", side_effect=[None, None, "payload after retries"]):
+        with patch.object(self.hook, "consume", side_effect=consume):
             result = await self.hook.aconsume(queue_name="QUEUE1", poll_interval=0.1)
 
         assert result == "payload after retries"

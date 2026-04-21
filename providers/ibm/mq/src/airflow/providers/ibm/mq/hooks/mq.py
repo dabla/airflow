@@ -248,11 +248,12 @@ class IBMMQHook(BaseHook):
         :return: The decoded message payload.
         """
         backoff = _BACKOFF_BASE
-        stop_event = threading.Event()
         while True:
+            stop_event = threading.Event()
             try:
                 result = await sync_to_async(self.consume)(queue_name, poll_interval, stop_event)
             except asyncio.CancelledError:
+                stop_event.set()
                 raise
             except Exception:
                 self.log.warning(
@@ -264,10 +265,9 @@ class IBMMQHook(BaseHook):
                 await asyncio.sleep(backoff)
                 backoff = min(backoff * _BACKOFF_FACTOR, _BACKOFF_MAX)
                 continue
-            finally:
-                stop_event.set()
 
             if result is not None:
+                stop_event.set()
                 return result
 
             self.log.warning(
