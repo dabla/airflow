@@ -60,12 +60,12 @@ from airflow.sdk.definitions.mappedoperator import (
     prevent_duplicates,
     validate_mapping_kwargs,
 )
-from airflow.sdk.definitions.param import ParamsDict
 from airflow.sdk.definitions.xcom_arg import XComArg
 
 if TYPE_CHECKING:
     from airflow.sdk.definitions.iterableoperator import IterableOperator, MappedIterableOperator
     from airflow.sdk.definitions.mappedoperator import ValidationSource
+    from airflow.sdk.definitions.param import ParamsDict
 
 
 @attrs.define(kw_only=True, repr=False)
@@ -226,6 +226,8 @@ class PartitionedOperator:
 
 @attrs.define(kw_only=True, repr=False)
 class DecoratedPartitionedOperator(PartitionedOperator):
+    """Intermediate abstraction for partitioned mapping from a TaskDecorator."""
+
     @property
     def is_setup(self) -> bool:
         return self.operator_partial.is_setup

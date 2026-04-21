@@ -39,6 +39,7 @@ except NameError:
 
 from airflow.sdk import TaskInstanceState, timezone
 from airflow.sdk.bases.operator import BaseOperator, DecoratedDeferredAsyncOperator, event_loop
+from airflow.sdk.definitions._internal.expandinput import PartitionedExpandInput
 from airflow.sdk.definitions.mappedoperator import MappedOperator
 from airflow.sdk.definitions.xcom_arg import MapXComArg, XComArg  # noqa: F401
 from airflow.sdk.exceptions import (
@@ -53,7 +54,7 @@ from airflow.sdk.execution_time.task_runner import MappedTaskInstance
 if TYPE_CHECKING:
     import jinja2
 
-    from airflow.sdk.definitions._internal.expandinput import ExpandInput, PartitionedExpandInput
+    from airflow.sdk.definitions._internal.expandinput import ExpandInput
     from airflow.sdk.definitions.context import Context
 
 
@@ -375,13 +376,7 @@ class IterableOperator(BaseOperator):
 
 
 class MappedIterableOperator(MappedOperator):
-    """
-    A thin wrapper around an existing MappedOperator that augments
-    its behavior (specifically unmap) without breaking Airflow internals.
-
-    This works by reusing the delegate's internal state instead of
-    reinitializing MappedOperator.
-    """
+    """A thin wrapper around an existing MappedOperator that unmaps an MappedOperator within an IterableOperator."""
 
     def __init__(
         self,

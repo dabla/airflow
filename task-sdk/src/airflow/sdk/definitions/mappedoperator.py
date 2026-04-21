@@ -27,7 +27,6 @@ import attrs
 import methodtools
 from lazy_object_proxy import Proxy
 
-from airflow.sdk import XComArg
 from airflow.sdk.api.datamodels._generated import DagAttributeTypes
 from airflow.sdk.bases.xcom import BaseXCom
 from airflow.sdk.definitions._internal.abstractoperator import (
@@ -59,7 +58,7 @@ if TYPE_CHECKING:
     import jinja2  # Slow import.
     import pendulum
 
-    from airflow.sdk import DAG, BaseOperator, BaseOperatorLink, Context, TaskGroup, TriggerRule
+    from airflow.sdk import DAG, BaseOperator, BaseOperatorLink, Context, TaskGroup, TriggerRule, XComArg
     from airflow.sdk.definitions._internal.expandinput import (
         ExpandInput,
         OperatorExpandArgument,
