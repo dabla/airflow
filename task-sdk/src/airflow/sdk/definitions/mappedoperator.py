@@ -21,7 +21,7 @@ import contextlib
 import copy
 import warnings
 from collections.abc import Collection, Iterable, Iterator, Mapping, Sequence
-from typing import TYPE_CHECKING, Any, Literal, TypeGuard
+from typing import TYPE_CHECKING, Any, Literal, TypeGuard, cast
 
 import attrs
 import methodtools
@@ -64,6 +64,7 @@ if TYPE_CHECKING:
         OperatorExpandArgument,
         OperatorExpandKwargsArgument,
     )
+    from airflow.sdk.definitions.iterableoperator import IterableOperator
     from airflow.sdk.definitions.operator_resources import Resources
     from airflow.sdk.definitions.param import ParamsDict
     from airflow.sdk.definitions.partitionedoperator import PartitionedOperator
@@ -216,11 +217,15 @@ class OperatorPartial:
     def _expand(self, expand_input: ExpandInput, *, strict: bool) -> MappedOperator:
         return self.partition(size=0)._expand(expand_input, strict=strict)
 
-    def iterate(self, **mapped_kwargs: OperatorExpandArgument) -> MappedOperator:
-        return self.partition(size=0).iterate(**mapped_kwargs)
+    def iterate(self, **mapped_kwargs: OperatorExpandArgument) -> IterableOperator:
+        operator = self.partition(size=0).iterate(**mapped_kwargs)
+        cast("IterableOperator", operator)
+        return operator
 
-    def iterate_kwargs(self, kwargs: OperatorExpandKwargsArgument, *, strict: bool = True) -> MappedOperator:
-        return self.partition(size=0).iterate_kwargs(kwargs, strict=strict)
+    def iterate_kwargs(self, kwargs: OperatorExpandKwargsArgument, *, strict: bool = True) -> IterableOperator:
+        operator = self.partition(size=0).iterate_kwargs(kwargs, strict=strict)
+        cast("IterableOperator", operator)
+        return operator
 
     def partition(self, size: int) -> PartitionedOperator:
         """Return a PartitionedOperator for partitioned mapping."""
