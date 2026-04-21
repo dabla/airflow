@@ -44,7 +44,7 @@ def get_provider_info():
                 "connection-type": "mq",
                 "ui-field-behaviour": {
                     "placeholders": {
-                        "extra": '{"queue_manager": "QM1", "channel": "DEV.APP.SVRCONN", "open_options": cls.default_open_options}'
+                        "extra": '{"queue_manager": "QM1",\n "channel": "DEV.APP.SVRCONN",\n "open_options": "MQOO_INPUT_SHARED"}\n'
                     }
                 },
             }
