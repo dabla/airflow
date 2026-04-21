@@ -39,6 +39,7 @@ except NameError:
 
 from airflow.sdk import TaskInstanceState, timezone
 from airflow.sdk.bases.operator import BaseOperator, DecoratedDeferredAsyncOperator, event_loop
+from airflow.sdk.definitions.mappedoperator import MappedOperator
 from airflow.sdk.definitions.xcom_arg import MapXComArg, XComArg  # noqa: F401
 from airflow.sdk.exceptions import (
     AirflowRescheduleTaskInstanceException,
@@ -54,7 +55,6 @@ if TYPE_CHECKING:
 
     from airflow.sdk.definitions._internal.expandinput import ExpandInput, PartitionedExpandInput
     from airflow.sdk.definitions.context import Context
-    from airflow.sdk.definitions.mappedoperator import MappedOperator
 
 
 class IterableOperator(BaseOperator):
