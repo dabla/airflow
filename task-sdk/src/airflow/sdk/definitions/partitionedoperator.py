@@ -18,8 +18,9 @@
 from __future__ import annotations
 
 import inspect
+from abc import ABCMeta, abstractmethod
 from collections.abc import Callable, Mapping, Sequence
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 import attrs
 
@@ -67,9 +68,11 @@ if TYPE_CHECKING:
     from airflow.sdk.definitions.mappedoperator import ValidationSource
     from airflow.sdk.definitions.param import ParamsDict
 
+T = TypeVar("T", bound=OperatorPartial | _TaskDecorator)
+
 
 @attrs.define(kw_only=True, repr=False)
-class PartitionedOperator:
+class PartitionableOperator(Generic[T], metaclass=ABCMeta):
     """
     Intermediate abstraction for partitioned mapping.
 
@@ -81,7 +84,7 @@ class PartitionedOperator:
     :param size: The number of partitions to create.
     """
 
-    operator_partial: OperatorPartial | _TaskDecorator
+    operator_partial: T
     size: int
 
     @property
@@ -92,6 +95,72 @@ class PartitionedOperator:
     def kwargs(self) -> dict[str, Any]:
         return self.operator_partial.kwargs
 
+    @abstractmethod
+    def iterate(self, **mapped_kwargs: OperatorExpandArgument) -> Any:
+        """
+        Iterate the operator over the provided mapped keyword arguments.
+
+        :param mapped_kwargs: Keyword arguments to expand against.
+        :return: An expanded operator or XComArg, depending on the subclass implementation.
+        """
+
+    @abstractmethod
+    def iterate_kwargs(self, kwargs: OperatorExpandKwargsArgument, *, strict: bool = True) -> Any:
+        """
+        Iterate the operator over a list of dictionaries or XComArg.
+
+        :param kwargs: List of dicts or XComArg to expand against.
+        :param strict: Whether to enforce strict argument checking.
+        :return: An expanded operator or XComArg, depending on the subclass implementation.
+        """
+
+    @abstractmethod
+    def _iterate(
+        self,
+        expand_input: ExpandInput,
+        *,
+        strict: bool,
+        apply_upstream_relationship: bool = True,
+    ) -> 'IterableOperator | MappedIterableOperator':
+        """
+        Internal method to perform the actual iteration.
+
+        :param expand_input: The input to iterate against.
+        :param strict: Whether to enforce strict argument checking.
+        :param apply_upstream_relationship: Whether to apply upstream relationships.
+        :return: An IterableOperator or MappedIterableOperator.
+        """
+
+    @abstractmethod
+    def _expand(
+        self,
+        expand_input: ExpandInput,
+        *,
+        strict: bool,
+        apply_upstream_relationship: bool = True,
+    ) -> MappedOperator:
+        """
+        Internal method to create a mapped operator for the given expansion input.
+
+        :param expand_input: The input to expand against.
+        :param strict: Whether to enforce strict argument checking.
+        :param apply_upstream_relationship: Whether to apply upstream relationships.
+        :return: A MappedOperator instance.
+        """
+
+
+@attrs.define(kw_only=True, repr=False)
+class PartitionedOperator(PartitionableOperator[OperatorPartial]):
+    """
+    Concrete implementation of PartitionableOperator for classic (non-decorated) operators.
+
+    This class wraps an OperatorPartial and provides partitioned expansion and iteration logic
+    for classic Airflow operators. It enables mapping tasks over partitions of data, supporting
+    both direct expansion via keyword arguments and expansion via a list of dictionaries or XComArg.
+
+    :param operator_partial: The OperatorPartial instance to be partitioned and expanded.
+    :param size: The number of partitions to create for mapping.
+    """
     @property
     def params(self) -> ParamsDict | dict:
         return self.operator_partial.params
@@ -225,8 +294,18 @@ class PartitionedOperator:
 
 
 @attrs.define(kw_only=True, repr=False)
-class DecoratedPartitionedOperator(PartitionedOperator):
-    """Intermediate abstraction for partitioned mapping from a TaskDecorator."""
+class DecoratedPartitionedOperator(PartitionableOperator[_TaskDecorator]):
+    """
+    Concrete implementation of PartitionableOperator for decorated (TaskFlow) operators.
+
+    This class wraps a _TaskDecorator and provides partitioned expansion and iteration logic
+    for TaskFlow-style decorated Airflow operators. It enables mapping decorated tasks over
+    partitions of data, returning XComArg objects for downstream dependencies and supporting
+    both direct expansion via keyword arguments and expansion via a list of dictionaries or XComArg.
+
+    :param operator_partial: The _TaskDecorator instance to be partitioned and expanded.
+    :param size: The number of partitions to create for mapping.
+    """
 
     @property
     def is_setup(self) -> bool:
