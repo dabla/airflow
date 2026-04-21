@@ -152,12 +152,12 @@ class TestIterableOperator:
             ([], []),
         ],
     )
-    def test_list_of_dicts_expand_input_iter_values(self, dag_maker, actual, expected):
+    def test_list_of_dicts_expand_input_iter_values(self, dag_maker, session, actual, expected):
         """Test IterableOperator with ListOfDictsExpandInput expand_input."""
         if not actual:
             pytest.skip("Empty list case tested separately")
 
-        with dag_maker(dag_id="test_dag") as dag:
+        with dag_maker(session=session) as dag:
             expand_input = ListOfDictsExpandInput(actual)
             iterable_op = self.create_iterable_operator(dag, expand_input)
 
@@ -165,9 +165,9 @@ class TestIterableOperator:
             assert result == expected
 
     @pytest.fixture(autouse=True)
-    def test_list_of_dicts_empty(self, dag_maker):
+    def test_list_of_dicts_empty(self, dag_maker, session):
         """Test IterableOperator with empty list."""
-        with dag_maker(dag_id="test_dag") as dag:
+        with dag_maker(session=session) as dag:
             expand_input = ListOfDictsExpandInput([])
             iterable_op = self.create_iterable_operator(dag, expand_input)
 
@@ -184,9 +184,9 @@ class TestIterableOperator:
             ({"a": [1, 2]}, [{"a": 1}, {"a": 2}]),  # Convert generator to list for testing
         ],
     )
-    def test_dict_of_lists_expand_input_iter_values(self, dag_maker, actual, expected):
+    def test_dict_of_lists_expand_input_iter_values(self, dag_maker, session, actual, expected):
         """Test IterableOperator with DictOfListsExpandInput expand_input."""
-        with dag_maker(dag_id="test_dag") as dag:
+        with dag_maker(session=session) as dag:
             expand_input = DictOfListsExpandInput(actual)
             iterable_op = self.create_iterable_operator(dag, expand_input)
 
@@ -194,9 +194,9 @@ class TestIterableOperator:
             assert result == expected
 
     @pytest.fixture(autouse=True)
-    def test_task_type(self, dag_maker):
+    def test_task_type(self, dag_maker, session):
         """Test that IterableOperator correctly reports task_type."""
-        with dag_maker(dag_id="test_dag") as dag:
+        with dag_maker(session=session) as dag:
             expand_input = ListOfDictsExpandInput([{"a": 1}])
             iterable_op = self.create_iterable_operator(dag, expand_input)
 
@@ -204,9 +204,9 @@ class TestIterableOperator:
             assert iterable_op.task_type == "MappedOperator"
 
     @pytest.fixture(autouse=True)
-    def test_task_id(self, dag_maker):
+    def test_task_id(self, dag_maker, session):
         """Test that IterableOperator inherits task_id from operator."""
-        with dag_maker(dag_id="test_dag") as dag:
+        with dag_maker(session=session) as dag:
             task_id = "my_task"
             expand_input = ListOfDictsExpandInput([{"a": 1}])
             iterable_op = self.create_iterable_operator(dag, expand_input, task_id=task_id)
@@ -214,18 +214,18 @@ class TestIterableOperator:
             assert iterable_op.task_id == task_id
 
     @pytest.fixture(autouse=True)
-    def test_with_task_concurrency(self, dag_maker):
+    def test_with_task_concurrency(self, dag_maker, session):
         """Test that IterableOperator respects task_concurrency parameter."""
-        with dag_maker(dag_id="test_dag") as dag:
+        with dag_maker(session=session) as dag:
             expand_input = ListOfDictsExpandInput([{"a": 1}])
             iterable_op = self.create_iterable_operator(dag, expand_input, task_concurrency=4)
 
             assert iterable_op.max_workers == 4
 
     @pytest.fixture(autouse=True)
-    def test_expand_input_stored(self, dag_maker):
+    def test_expand_input_stored(self, dag_maker, session):
         """Test that IterableOperator stores expand_input correctly."""
-        with dag_maker(dag_id="test_dag") as dag:
+        with dag_maker(session=session) as dag:
             expand_input_data = ListOfDictsExpandInput([{"a": 1}, {"a": 2}])
             iterable_op = self.create_iterable_operator(dag, expand_input_data)
 
@@ -233,9 +233,9 @@ class TestIterableOperator:
             assert isinstance(iterable_op.expand_input, (ListOfDictsExpandInput, DictOfListsExpandInput))
 
     @pytest.fixture(autouse=True)
-    def test_partial_kwargs_stored(self, dag_maker):
+    def test_partial_kwargs_stored(self, dag_maker, session):
         """Test that IterableOperator stores partial_kwargs from operator."""
-        with dag_maker(dag_id="test_dag") as dag:
+        with dag_maker(session=session) as dag:
             expand_input = ListOfDictsExpandInput([{"a": 1}])
             iterable_op = self.create_iterable_operator(dag, expand_input)
 
@@ -243,9 +243,9 @@ class TestIterableOperator:
             assert isinstance(iterable_op.partial_kwargs, dict)
 
     @pytest.fixture(autouse=True)
-    def test_execute_list_of_dicts(self, dag_maker, mock_xcom_get_one):
+    def test_execute_list_of_dicts(self, dag_maker, session, mock_xcom_get_one):
         """Test executing IterableOperator with ListOfDictsExpandInput."""
-        with dag_maker(dag_id="test_dag") as dag:
+        with dag_maker(session=session) as dag:
             expand_input = ListOfDictsExpandInput([{"arg1": 1}, {"arg1": 2}])
             iterable_op = self.create_iterable_operator(dag, expand_input, task_id="exec_list_of_dicts")
 
@@ -256,9 +256,9 @@ class TestIterableOperator:
             assert materialized == [(1, None, None), (2, None, None)]
 
     @pytest.fixture(autouse=True)
-    def test_execute_dict_of_lists(self, dag_maker, mock_xcom_get_one):
+    def test_execute_dict_of_lists(self, dag_maker, session, mock_xcom_get_one):
         """Test executing IterableOperator with DictOfListsExpandInput."""
-        with dag_maker(dag_id="test_dag") as dag:
+        with dag_maker(session=session) as dag:
             expand_input = DictOfListsExpandInput({"arg1": [1, 2, 3]})
             iterable_op = self.create_iterable_operator(dag, expand_input, task_id="exec_dict_of_lists")
 
@@ -269,9 +269,9 @@ class TestIterableOperator:
             assert materialized == [(1, None, None), (2, None, None), (3, None, None)]
 
     @pytest.fixture(autouse=True)
-    def test_execute_empty_list_of_dicts(self, dag_maker, mock_xcom_get_one):
+    def test_execute_empty_list_of_dicts(self, dag_maker, session, mock_xcom_get_one):
         """Test executing IterableOperator with empty ListOfDictsExpandInput."""
-        with dag_maker(dag_id="test_dag") as dag:
+        with dag_maker(session=session) as dag:
             expand_input = ListOfDictsExpandInput([])
             iterable_op = self.create_iterable_operator(dag, expand_input, task_id="exec_empty")
 
@@ -282,9 +282,9 @@ class TestIterableOperator:
             assert materialized == []
 
     @pytest.fixture(autouse=True)
-    def test_execute_multiple_key_dict_of_lists(self, dag_maker, mock_xcom_get_one):
+    def test_execute_multiple_key_dict_of_lists(self, dag_maker, session, mock_xcom_get_one):
         """Test executing IterableOperator with multiple keys in DictOfListsExpandInput."""
-        with dag_maker(dag_id="test_dag") as dag:
+        with dag_maker(session=session) as dag:
             expand_input = DictOfListsExpandInput({"arg1": [1, 2], "arg2": [10, 20], "arg3": ["x", "y"]})
             iterable_op = self.create_iterable_operator(dag, expand_input, task_id="exec_multi_key")
 
@@ -295,9 +295,9 @@ class TestIterableOperator:
             assert materialized == [(1, 10, "x"), (2, 20, "y")]
 
     @pytest.fixture(autouse=True)
-    def test_execute_with_task_concurrency_setting(self, dag_maker, mock_xcom_get_one):
+    def test_execute_with_task_concurrency_setting(self, dag_maker, session, mock_xcom_get_one):
         """Test executing IterableOperator with task_concurrency parameter."""
-        with dag_maker(dag_id="test_dag") as dag:
+        with dag_maker(session=session) as dag:
             expand_input = ListOfDictsExpandInput([{"arg1": 1}, {"arg1": 2}, {"arg1": 3}])
             iterable_op = self.create_iterable_operator(
                 dag, expand_input, task_id="exec_concurrency", task_concurrency=2
@@ -311,9 +311,9 @@ class TestIterableOperator:
             assert iterable_op.max_workers == 2
 
     @pytest.fixture(autouse=True)
-    def test_execute_all_parameters(self, dag_maker, mock_xcom_get_one):
+    def test_execute_all_parameters(self, dag_maker, session, mock_xcom_get_one):
         """Test executing IterableOperator with all arg1, arg2, arg3 parameters."""
-        with dag_maker(dag_id="test_dag") as dag:
+        with dag_maker(session=session) as dag:
             expand_input = ListOfDictsExpandInput(
                 [
                     {"arg1": 1, "arg2": 10, "arg3": 100},
@@ -329,9 +329,9 @@ class TestIterableOperator:
             assert materialized == [(1, 10, 100), (2, 20, 200)]
 
     @pytest.fixture(autouse=True)
-    def test_execute_with_do_xcom_push_false(self, dag_maker):
+    def test_execute_with_do_xcom_push_false(self, dag_maker, session):
         """Test executing IterableOperator when do_xcom_push is False."""
-        with dag_maker(dag_id="test_dag") as dag:
+        with dag_maker(session=session) as dag:
             expand_input = ListOfDictsExpandInput([{"arg1": 1}, {"arg1": 2}])
             iterable_op = self.create_iterable_operator(
                 dag, expand_input, task_id="no_xcom_push", do_xcom_push=False
@@ -343,7 +343,7 @@ class TestIterableOperator:
             assert result is None
 
     @pytest.fixture(autouse=True)
-    def test_execute_with_failed_tasks_but_no_retries(self, dag_maker, mock_xcom_get_one):
+    def test_execute_with_failed_tasks_but_no_retries(self, dag_maker, session, mock_xcom_get_one):
         """Test executing IterableOperator where tasks fail but no retries are available.
 
         This test verifies that:
@@ -351,7 +351,7 @@ class TestIterableOperator:
         2. When no retries are configured (retries=0), the exception propagates and is not retried
         3. The BaseExceptionGroup is raised containing the task failure
         """
-        with dag_maker(dag_id="test_dag") as dag:
+        with dag_maker(session=session) as dag:
             expand_input = ListOfDictsExpandInput(
                 [
                     {"arg1": 1, "arg2": 10},
@@ -372,7 +372,7 @@ class TestIterableOperator:
                 iterable_op.execute(context=context)
 
     @pytest.fixture(autouse=True)
-    def test_execute_with_failed_tasks_and_expired_reschedule_date(self, dag_maker, mock_xcom_get_one):
+    def test_execute_with_failed_tasks_and_expired_reschedule_date(self, dag_maker, session, mock_xcom_get_one):
         """Test executing IterableOperator where certain map_index tasks fail on first attempt and are retried.
 
         This test verifies that:
@@ -380,7 +380,7 @@ class TestIterableOperator:
         2. Failed tasks are retried immediately without deferring (since reschedule_date is expired)
         3. Retried tasks succeed on subsequent attempts (try_number > 0) and produce the expected output
         """
-        with dag_maker(dag_id="test_dag") as dag:
+        with dag_maker(session=session) as dag:
             expand_input = ListOfDictsExpandInput(
                 [
                     {"arg1": 1, "arg2": 10},
