@@ -18,11 +18,11 @@
 from __future__ import annotations
 
 import inspect
-from collections.abc import Mapping, Sequence, Callable
+from collections.abc import Callable, Mapping, Sequence
 from typing import TYPE_CHECKING, Any
 
 import attrs
-from airflow.exceptions import TaskDeferralError
+
 from airflow.sdk import TriggerRule, timezone
 from airflow.sdk.bases.decorator import (
     DecoratedMappedOperator,
@@ -117,9 +117,7 @@ class PartitionedOperator:
         # Since the input is already checked at parse time, we can set strict
         # to False to skip the checks on execution.
         expand_input = DictOfListsExpandInput(mapped_kwargs)
-        return self._iterate(
-            expand_input, strict=False, apply_upstream_relationship=False
-        )
+        return self._iterate(expand_input, strict=False, apply_upstream_relationship=False)
 
     def iterate_kwargs(
         self, kwargs: OperatorExpandKwargsArgument, *, strict: bool = True
@@ -127,18 +125,12 @@ class PartitionedOperator:
         if isinstance(kwargs, Sequence):
             for item in kwargs:
                 if not isinstance(item, (XComArg, Mapping)):
-                    raise TypeError(
-                        f"expected XComArg or list[dict], not {type(kwargs).__name__}"
-                    )
+                    raise TypeError(f"expected XComArg or list[dict], not {type(kwargs).__name__}")
         elif not isinstance(kwargs, XComArg):
-            raise TypeError(
-                f"expected XComArg or list[dict], not {type(kwargs).__name__}"
-            )
+            raise TypeError(f"expected XComArg or list[dict], not {type(kwargs).__name__}")
 
         expand_input = ListOfDictsExpandInput(kwargs)
-        return self._iterate(
-            expand_input, strict=strict, apply_upstream_relationship=False
-        )
+        return self._iterate(expand_input, strict=strict, apply_upstream_relationship=False)
 
     def _iterate(
         self,
@@ -271,9 +263,7 @@ class DecoratedPartitionedOperator(PartitionedOperator):
         if not map_kwargs:
             raise TypeError("no arguments to expand against")
         self._validate_arg_names("expand", map_kwargs)
-        prevent_duplicates(
-            self.kwargs, map_kwargs, fail_reason="mapping already partial"
-        )
+        prevent_duplicates(self.kwargs, map_kwargs, fail_reason="mapping already partial")
         # Since the input is already checked at parse time, we can set strict
         # to False to skip the checks on execution.
         if self.is_teardown:
@@ -281,11 +271,7 @@ class DecoratedPartitionedOperator(PartitionedOperator):
                 raise ValueError("Trigger rule not configurable for teardown tasks.")
             self.kwargs.update(trigger_rule=TriggerRule.ALL_DONE_SETUP_SUCCESS)
         expand_input = DictOfListsExpandInput(map_kwargs)
-        operator = self._iterate(
-            expand_input,
-            strict=False,
-            apply_upstream_relationship=False,
-        )
+        operator = self._iterate(expand_input, strict=False, apply_upstream_relationship=False)
         return XComArg(operator=operator)
 
     def iterate_kwargs(
@@ -309,19 +295,11 @@ class DecoratedPartitionedOperator(PartitionedOperator):
         if isinstance(kwargs, Sequence):
             for item in kwargs:
                 if not isinstance(item, (XComArg, Mapping)):
-                    raise TypeError(
-                        f"expected XComArg or list[dict], not {type(kwargs).__name__}"
-                    )
+                    raise TypeError(f"expected XComArg or list[dict], not {type(kwargs).__name__}")
         elif not isinstance(kwargs, XComArg):
-            raise TypeError(
-                f"expected XComArg or list[dict], not {type(kwargs).__name__}"
-            )
+            raise TypeError(f"expected XComArg or list[dict], not {type(kwargs).__name__}")
         expand_input = ListOfDictsExpandInput(kwargs)
-        operator = self._iterate(
-            expand_input,
-            strict=strict,
-            apply_upstream_relationship=False,
-        )
+        operator = self._iterate(expand_input, strict=strict, apply_upstream_relationship=False)
         return XComArg(operator=operator)
 
     def _iterate(
@@ -343,9 +321,7 @@ class DecoratedPartitionedOperator(PartitionedOperator):
                 expand_input=DecoratedExpandInput(expand_input),
                 partition_size=self.size,
             )
-        return IterableOperator(
-            operator=operator, expand_input=DecoratedExpandInput(expand_input)
-        )
+        return IterableOperator(operator=operator, expand_input=DecoratedExpandInput(expand_input))
 
     def _expand(
         self,
@@ -358,9 +334,7 @@ class DecoratedPartitionedOperator(PartitionedOperator):
 
         task_kwargs = self.kwargs.copy()
         dag = task_kwargs.pop("dag", None) or DagContext.get_current()
-        task_group = task_kwargs.pop(
-            "task_group", None
-        ) or TaskGroupContext.get_current(dag)
+        task_group = task_kwargs.pop("task_group", None) or TaskGroupContext.get_current(dag)
 
         default_args, partial_params = get_merged_defaults(
             dag=dag,
@@ -383,9 +357,7 @@ class DecoratedPartitionedOperator(PartitionedOperator):
             "task_concurrency",  # Deprecated(replaced by `max_active_tis_per_dag`).
         }
         partial_keys = set(base_signature.parameters) - ignore
-        partial_kwargs.update(
-            {key: value for key, value in default_args.items() if key in partial_keys}
-        )
+        partial_kwargs.update({key: value for key, value in default_args.items() if key in partial_keys})
         partial_kwargs.update(task_kwargs)
 
         task_id = get_unique_task_id(partial_kwargs.pop("task_id"), dag, task_group)
@@ -402,9 +374,7 @@ class DecoratedPartitionedOperator(PartitionedOperator):
                 dag_str = ""
                 if dag:
                     dag_str = f" in dag {dag.dag_id}"
-                raise ValueError(
-                    f"pool slots for {task_id}{dag_str} cannot be less than 1"
-                )
+                raise ValueError(f"pool slots for {task_id}{dag_str} cannot be less than 1")
 
         for fld, convert in (
             ("retries", parse_retries),

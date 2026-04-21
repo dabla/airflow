@@ -28,14 +28,10 @@ from typing import TYPE_CHECKING, Any, ClassVar, Generic, ParamSpec, Protocol, T
 import attr
 import typing_extensions
 
-from airflow.sdk import TriggerRule, timezone
+from airflow.sdk import TriggerRule
 from airflow.sdk.bases.operator import (
     BASEOPERATOR_ARGS_EXPECTED_TYPES,
     BaseOperator,
-    coerce_resources,
-    coerce_timedelta,
-    get_merged_defaults,
-    parse_retries,
 )
 from airflow.sdk.definitions._internal.contextmanager import DagContext, TaskGroupContext
 from airflow.sdk.definitions._internal.decorators import remove_task_decorator
@@ -50,7 +46,6 @@ from airflow.sdk.definitions.asset import Asset
 from airflow.sdk.definitions.context import KNOWN_CONTEXT_KEYS
 from airflow.sdk.definitions.mappedoperator import (
     MappedOperator,
-    ensure_xcomarg_return_value,
     prevent_duplicates,
 )
 from airflow.sdk.definitions.xcom_arg import XComArg
@@ -567,13 +562,13 @@ class _TaskDecorator(ExpandableFactory, Generic[FParams, FReturn, OperatorSubcla
             self.kwargs.get("trigger_rule") == TriggerRule.ALWAYS
             and not isinstance(kwargs, XComArg)
             and any(
-            [
-                isinstance(v, XComArg)
-                for kwarg in kwargs
-                if not isinstance(kwarg, XComArg)
-                for v in kwarg.values()
-            ]
-        )
+                [
+                    isinstance(v, XComArg)
+                    for kwarg in kwargs
+                    if not isinstance(kwarg, XComArg)
+                    for v in kwarg.values()
+                ]
+            )
         ):
             raise ValueError(
                 "Task-generated mapping within a task using 'expand_kwargs' is not allowed with trigger rule 'always'."
@@ -593,9 +588,7 @@ class _TaskDecorator(ExpandableFactory, Generic[FParams, FReturn, OperatorSubcla
     def iterate(self, **mapped_kwargs: OperatorExpandArgument) -> XComArg:
         return self.partition(size=0).iterate(**mapped_kwargs)
 
-    def iterate_kwargs(
-        self, kwargs: OperatorExpandKwargsArgument, *, strict: bool = True
-    ) -> XComArg:
+    def iterate_kwargs(self, kwargs: OperatorExpandKwargsArgument, *, strict: bool = True) -> XComArg:
         return self.partition(size=0).iterate_kwargs(kwargs, strict=strict)
 
     def partition(self, size: int) -> DecoratedPartitionedOperator:

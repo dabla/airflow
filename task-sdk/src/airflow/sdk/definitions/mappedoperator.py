@@ -220,9 +220,7 @@ class OperatorPartial:
     def iterate(self, **mapped_kwargs: OperatorExpandArgument) -> MappedOperator:
         return self.partition(size=0).iterate(**mapped_kwargs)
 
-    def iterate_kwargs(
-        self, kwargs: OperatorExpandKwargsArgument, *, strict: bool = True
-    ) -> MappedOperator:
+    def iterate_kwargs(self, kwargs: OperatorExpandKwargsArgument, *, strict: bool = True) -> MappedOperator:
         return self.partition(size=0).iterate_kwargs(kwargs, strict=strict)
 
     def partition(self, size: int) -> PartitionedOperator:
