@@ -581,8 +581,14 @@ class _TaskDecorator(ExpandableFactory, Generic[FParams, FReturn, OperatorSubcla
             raise TypeError(f"expected XComArg or list[dict], not {type(kwargs).__name__}")
         return self._expand(ListOfDictsExpandInput(kwargs), strict=strict)
 
-    def _expand(self, expand_input: ExpandInput, *, strict: bool) -> XComArg:
-        operator = self.partition(size=0)._expand(expand_input, strict=strict)
+    def _expand(
+        self,
+        expand_input: ExpandInput,
+        *,
+        strict: bool,
+        apply_upstream_relationship: bool = True,
+    ) -> XComArg:
+        operator = self.partition(size=0)._expand(expand_input, strict=strict, apply_upstream_relationship=apply_upstream_relationship)
         return XComArg(operator=operator)
 
     def iterate(self, **mapped_kwargs: OperatorExpandArgument) -> XComArg:
