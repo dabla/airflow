@@ -290,7 +290,6 @@ class IBMMQHook(BaseHook):
                 stop_event.set()
                 return result
 
-            # Only DEBUG log for quiet queue (no message available)
             self.log.debug(
                 "IBM MQ consume returned no event for queue '%s'; queue may be quiet. Retrying in %.1fs",
                 queue_name,
@@ -352,7 +351,6 @@ class IBMMQHook(BaseHook):
                         if e.reason == ibmmq.CMQC.MQRC_NO_MSG_AVAILABLE:
                             self.log.debug("No message available on queue '%s' (reason=%s)", queue_name, e.reason)
                             continue
-                        # For all other MQMIError, log and re-raise immediately
                         self.log.error(
                             "IBM MQ error on queue '%s': completion_code=%s reason_code=%s (%s)",
                             queue_name, e.comp, e.reason, e,
