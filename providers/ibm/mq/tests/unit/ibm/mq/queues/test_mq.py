@@ -27,12 +27,13 @@ pytest.importorskip("airflow.providers.common.messaging.providers.base_provider"
 class TestIBMMQMessageQueueProvider:
     """Tests for IBMMQMessageQueueProvider."""
 
-    def setup_method(self):
+    @classmethod
+    def setup_class(cls):
         """Set up the test environment."""
         from airflow.providers.ibm.mq.queues.mq import IBMMQMessageQueueProvider
 
-        self.provider = IBMMQMessageQueueProvider()
-        MESSAGE_QUEUE_PROVIDERS.append(self.provider)
+        cls.provider = IBMMQMessageQueueProvider()
+        MESSAGE_QUEUE_PROVIDERS.append(cls.provider)
 
     def test_queue_create(self):
         """Test the creation of the provider."""
@@ -43,7 +44,7 @@ class TestIBMMQMessageQueueProvider:
     @pytest.mark.parametrize(
         ("queue_uri", "expected_result"),
         [
-            pytest.param("mq://mq_default/MY.QUEUE.NAME", True, id="valid_mq_uri"),
+            pytest.param("ibmmq://mq_default/MY.QUEUE.NAME", True, id="valid_mq_uri"),
             pytest.param("http://example.com", False, id="http_url"),
             pytest.param("not-a-url", False, id="invalid_url"),
         ],
@@ -56,7 +57,7 @@ class TestIBMMQMessageQueueProvider:
         ("scheme", "expected_result"),
         [
             pytest.param("kafka", False, id="kafka_scheme"),
-            pytest.param("mq", True, id="mq_scheme"),
+            pytest.param("ibmmq", True, id="mq_scheme"),
             pytest.param("redis+pubsub", False, id="redis_scheme"),
             pytest.param("sqs", False, id="sqs_scheme"),
             pytest.param("unknown", False, id="unknown_scheme"),
@@ -74,7 +75,7 @@ class TestIBMMQMessageQueueProvider:
         ("queue_uri", "extra_kwargs", "expected_result"),
         [
             pytest.param(
-                "mq://my_conn/QUEUE1",
+                "ibmmq://my_conn/QUEUE1",
                 {},
                 {
                     "mq_conn_id": "my_conn",
@@ -84,7 +85,7 @@ class TestIBMMQMessageQueueProvider:
                 id="default_poll_interval",
             ),
             pytest.param(
-                "mq://my_conn/QUEUE1",
+                "ibmmq://my_conn/QUEUE1",
                 {"poll_interval": 60},
                 {
                     "mq_conn_id": "my_conn",
@@ -104,13 +105,13 @@ class TestIBMMQMessageQueueProvider:
         ("queue_uri", "expected_error", "error_match"),
         [
             pytest.param(
-                "mq:///QUEUE1",
+                "ibmmq:///QUEUE1",
                 ValueError,
                 "MQ URI must contain connection id",
                 id="missing_conn_id",
             ),
             pytest.param(
-                "mq://my_conn/",
+                "ibmmq://my_conn/",
                 ValueError,
                 "MQ URI must contain queue name",
                 id="missing_queue_name",
@@ -124,12 +125,12 @@ class TestIBMMQMessageQueueProvider:
 
     def test_message_queue_trigger_with_scheme(self):
         trigger = MessageQueueTrigger(
-            scheme="mq",
+            scheme="ibmmq",
             mq_conn_id="mq_default",
             queue_name="MY.QUEUE.NAME",
         )
         assert trigger.queue is None
-        assert trigger.scheme == "mq"
+        assert trigger.scheme == "ibmmq"
         assert isinstance(trigger.trigger, AwaitMessageTrigger)
         assert trigger.trigger.mq_conn_id == "mq_default"
         assert trigger.trigger.queue_name == "MY.QUEUE.NAME"
@@ -138,10 +139,10 @@ class TestIBMMQMessageQueueProvider:
     @pytest.mark.filterwarnings("ignore::airflow.exceptions.AirflowProviderDeprecationWarning")
     def test_message_queue_trigger_with_deprecated_queue(self):
         trigger = MessageQueueTrigger(
-            queue="mq://mq_default/MY.QUEUE.NAME"
+            queue="ibmmq://mq_default/MY.QUEUE.NAME"
         )
         assert trigger.scheme is None
-        assert trigger.queue == "mq://mq_default/MY.QUEUE.NAME"
+        assert trigger.queue == "ibmmq://mq_default/MY.QUEUE.NAME"
         assert isinstance(trigger.trigger, AwaitMessageTrigger)
         assert trigger.trigger.mq_conn_id == "mq_default"
         assert trigger.trigger.queue_name == "MY.QUEUE.NAME"

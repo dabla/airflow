@@ -42,7 +42,7 @@ def mq_connection():
     """Create a test MQ connection object."""
     return Connection(
         conn_id="mq_conn",
-        conn_type="mq",
+        conn_type="ibmmq",
         host="mq.example.com",
         login="user",
         password="pass",

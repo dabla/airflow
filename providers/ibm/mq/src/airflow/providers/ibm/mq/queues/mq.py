@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from airflow.triggers.base import BaseEventTrigger
 
 # [START queue_regexp]
-QUEUE_REGEXP = r"^mq://"
+QUEUE_REGEXP = r"^ibmmq://"
 # [END queue_regexp]
 
 
@@ -48,7 +48,7 @@ class IBMMQMessageQueueProvider(BaseMessageQueueProvider):
         from airflow.sdk import Asset, AssetWatcher
 
         trigger = MessageQueueTrigger(
-            queue="mq://mq_default/MY.QUEUE.NAME",
+            queue="ibmmq://mq_default/MY.QUEUE.NAME",
         )
 
         asset = Asset("mq_topic_asset", watchers=[AssetWatcher(name="mq_watcher", trigger=trigger)])
@@ -56,7 +56,7 @@ class IBMMQMessageQueueProvider(BaseMessageQueueProvider):
     [END ibmmq_message_queue_provider_description]
     """
 
-    scheme = "mq"
+    scheme = "ibmmq"
 
     def queue_matches(self, queue: str) -> bool:
         return bool(re.match(QUEUE_REGEXP, queue))

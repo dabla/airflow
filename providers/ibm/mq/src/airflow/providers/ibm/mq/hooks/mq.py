@@ -65,7 +65,7 @@ class IBMMQHook(BaseHook):
 
     conn_name_attr = "conn_id"
     default_conn_name = "mq_default"
-    conn_type = "mq"
+    conn_type = "ibmmq"
     hook_name = "IBM MQ"
     default_open_options = "MQOO_INPUT_SHARED"
 

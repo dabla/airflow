@@ -22,7 +22,7 @@ from airflow.sdk import DAG, Asset, AssetWatcher, task
 
 # Define a trigger that listens to an external message queue (IBM MQ in this case)
 trigger = MessageQueueTrigger(
-    queue="mq://mq_default/MY.QUEUE.NAME",
+    queue="ibmmq://mq_default/MY.QUEUE.NAME",
 )
 
 mq_topic_asset = Asset(

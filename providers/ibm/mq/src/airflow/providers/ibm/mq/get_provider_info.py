@@ -41,7 +41,7 @@ def get_provider_info():
         "connection-types": [
             {
                 "hook-class-name": "airflow.providers.ibm.mq.hooks.mq.IBMMQHook",
-                "connection-type": "mq",
+                "connection-type": "ibmmq",
                 "ui-field-behaviour": {
                     "placeholders": {
                         "extra": '{"queue_manager": "QM1",\n "channel": "DEV.APP.SVRCONN",\n "open_options": "MQOO_INPUT_SHARED"}\n'
