@@ -172,7 +172,7 @@ class IBMMQHook(BaseHook):
         if not channel:
             raise ValueError("channel must be set in Connection extra config or hook init")
 
-        if not self.open_options:
+        if self.open_options is None:
             self.open_options = getattr(
                 ibmmq.CMQC,
                 config.get("open_options", self.default_open_options),

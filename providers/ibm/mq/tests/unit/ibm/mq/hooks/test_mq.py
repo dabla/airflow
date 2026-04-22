@@ -97,6 +97,26 @@ class TestIBMMQHook:
         )
         self.hook = IBMMQHook("mq_conn")
 
+    @pytest.mark.parametrize(
+        "open_options_attr",
+        [
+            "MQGMO_NO_WAIT",
+            "MQOO_INPUT_EXCLUSIVE",
+            "MQOO_INPUT_SHARED",
+        ],
+    )
+    async def test_get_conn_with_open_options(self, mock_get_connection, open_options_attr):
+        import ibmmq
+
+        open_options = getattr(ibmmq.CMQC, open_options_attr)
+        hook = IBMMQHook("mq_conn")
+
+        assert not hook.open_options
+
+        hook.open_options = open_options
+        with hook.get_conn() as conn:
+            assert hook.open_options == open_options
+
     @patch("ibmmq.connect")
     @patch("ibmmq.Queue")
     async def test_aconsume_message(

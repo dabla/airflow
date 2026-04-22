@@ -54,9 +54,13 @@ def _ensure_fake_ibmmq_if_missing():
     fake.CMQC = MagicMock()
     fake.CMQC.MQRC_NO_MSG_AVAILABLE = 2033
     fake.CMQC.MQRC_CONNECTION_BROKEN = 2009
+    fake.CMQC.MQGMO_NO = 0
+    fake.CMQC.MQGMO_NO_WAIT = 0
     fake.CMQC.MQGMO_WAIT = 1
     fake.CMQC.MQGMO_NO_SYNCPOINT = 2
     fake.CMQC.MQGMO_CONVERT = 4
+    fake.CMQC.MQOO_INPUT_EXCLUSIVE = 4
+    fake.CMQC.MQOO_INPUT_SHARED = 2
     fake.MQMIError = MQMIError
     fake.PYIFError = PYIFError
     fake.OD = MagicMock()
