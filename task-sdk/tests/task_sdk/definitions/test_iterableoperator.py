@@ -145,6 +145,7 @@ class TestIterableOperator:
             dag=dag,
         )
 
+    @pytest.mark.db_test
     @pytest.mark.parametrize(
         ("actual", "expected"),
         [
@@ -165,7 +166,7 @@ class TestIterableOperator:
             result = list(iterable_op.expand_input.iter_values({}))
             assert result == expected
 
-    @pytest.fixture(autouse=True)
+    @pytest.mark.db_test
     def test_list_of_dicts_empty(self, dag_maker, session):
         """Test IterableOperator with empty list."""
         with dag_maker(session=session) as dag:
@@ -175,6 +176,7 @@ class TestIterableOperator:
             result = list(iterable_op.expand_input.iter_values({}))
             assert result == []
 
+    @pytest.mark.db_test
     @pytest.mark.parametrize(
         ("actual", "expected"),
         [
@@ -194,7 +196,7 @@ class TestIterableOperator:
             result = list(iterable_op.expand_input.iter_values({}))
             assert result == expected
 
-    @pytest.fixture(autouse=True)
+    @pytest.mark.db_test
     def test_task_type(self, dag_maker, session):
         """Test that IterableOperator correctly reports task_type."""
         with dag_maker(session=session) as dag:
@@ -204,7 +206,7 @@ class TestIterableOperator:
             assert isinstance(iterable_op, IterableOperator)
             assert iterable_op.task_type == "MappedOperator"
 
-    @pytest.fixture(autouse=True)
+    @pytest.mark.db_test
     def test_task_id(self, dag_maker, session):
         """Test that IterableOperator inherits task_id from operator."""
         with dag_maker(session=session) as dag:
@@ -214,7 +216,7 @@ class TestIterableOperator:
 
             assert iterable_op.task_id == task_id
 
-    @pytest.fixture(autouse=True)
+    @pytest.mark.db_test
     def test_with_task_concurrency(self, dag_maker, session):
         """Test that IterableOperator respects task_concurrency parameter."""
         with dag_maker(session=session) as dag:
@@ -223,7 +225,7 @@ class TestIterableOperator:
 
             assert iterable_op.max_workers == 4
 
-    @pytest.fixture(autouse=True)
+    @pytest.mark.db_test
     def test_expand_input_stored(self, dag_maker, session):
         """Test that IterableOperator stores expand_input correctly."""
         with dag_maker(session=session) as dag:
@@ -233,7 +235,7 @@ class TestIterableOperator:
             assert iterable_op.expand_input is expand_input_data
             assert isinstance(iterable_op.expand_input, (ListOfDictsExpandInput, DictOfListsExpandInput))
 
-    @pytest.fixture(autouse=True)
+    @pytest.mark.db_test
     def test_partial_kwargs_stored(self, dag_maker, session):
         """Test that IterableOperator stores partial_kwargs from operator."""
         with dag_maker(session=session) as dag:
@@ -243,7 +245,7 @@ class TestIterableOperator:
             assert hasattr(iterable_op, "partial_kwargs")
             assert isinstance(iterable_op.partial_kwargs, dict)
 
-    @pytest.fixture(autouse=True)
+    @pytest.mark.db_test
     def test_execute_list_of_dicts(self, dag_maker, session, mock_xcom_get_one):
         """Test executing IterableOperator with ListOfDictsExpandInput."""
         with dag_maker(session=session) as dag:
@@ -256,7 +258,7 @@ class TestIterableOperator:
             materialized = list(result)
             assert materialized == [(1, None, None), (2, None, None)]
 
-    @pytest.fixture(autouse=True)
+    @pytest.mark.db_test
     def test_execute_dict_of_lists(self, dag_maker, session, mock_xcom_get_one):
         """Test executing IterableOperator with DictOfListsExpandInput."""
         with dag_maker(session=session) as dag:
@@ -269,7 +271,7 @@ class TestIterableOperator:
             materialized = list(result)
             assert materialized == [(1, None, None), (2, None, None), (3, None, None)]
 
-    @pytest.fixture(autouse=True)
+    @pytest.mark.db_test
     def test_execute_empty_list_of_dicts(self, dag_maker, session, mock_xcom_get_one):
         """Test executing IterableOperator with empty ListOfDictsExpandInput."""
         with dag_maker(session=session) as dag:
@@ -282,7 +284,7 @@ class TestIterableOperator:
             materialized = list(result)
             assert materialized == []
 
-    @pytest.fixture(autouse=True)
+    @pytest.mark.db_test
     def test_execute_multiple_key_dict_of_lists(self, dag_maker, session, mock_xcom_get_one):
         """Test executing IterableOperator with multiple keys in DictOfListsExpandInput."""
         with dag_maker(session=session) as dag:
@@ -295,7 +297,7 @@ class TestIterableOperator:
             materialized = list(result)
             assert materialized == [(1, 10, "x"), (2, 20, "y")]
 
-    @pytest.fixture(autouse=True)
+    @pytest.mark.db_test
     def test_execute_with_task_concurrency_setting(self, dag_maker, session, mock_xcom_get_one):
         """Test executing IterableOperator with task_concurrency parameter."""
         with dag_maker(session=session) as dag:
@@ -311,7 +313,7 @@ class TestIterableOperator:
             assert materialized == [(1, None, None), (2, None, None), (3, None, None)]
             assert iterable_op.max_workers == 2
 
-    @pytest.fixture(autouse=True)
+    @pytest.mark.db_test
     def test_execute_all_parameters(self, dag_maker, session, mock_xcom_get_one):
         """Test executing IterableOperator with all arg1, arg2, arg3 parameters."""
         with dag_maker(session=session) as dag:
@@ -329,7 +331,7 @@ class TestIterableOperator:
             materialized = list(result)
             assert materialized == [(1, 10, 100), (2, 20, 200)]
 
-    @pytest.fixture(autouse=True)
+    @pytest.mark.db_test
     def test_execute_with_do_xcom_push_false(self, dag_maker, session):
         """Test executing IterableOperator when do_xcom_push is False."""
         with dag_maker(session=session) as dag:
@@ -343,7 +345,7 @@ class TestIterableOperator:
 
             assert result is None
 
-    @pytest.fixture(autouse=True)
+    @pytest.mark.db_test
     def test_execute_with_failed_tasks_but_no_retries(self, dag_maker, session, mock_xcom_get_one):
         """Test executing IterableOperator where tasks fail but no retries are available.
 
@@ -372,7 +374,7 @@ class TestIterableOperator:
             with pytest.raises(BaseExceptionGroup):
                 iterable_op.execute(context=context)
 
-    @pytest.fixture(autouse=True)
+    @pytest.mark.db_test
     def test_execute_with_failed_tasks_and_expired_reschedule_date(
         self, dag_maker, session, mock_xcom_get_one
     ):
