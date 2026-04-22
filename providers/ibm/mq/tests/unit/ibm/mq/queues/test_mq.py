@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import pytest
 
+from airflow.providers.common.messaging.triggers.msg_queue import MessageQueueTrigger, MESSAGE_QUEUE_PROVIDERS
 from airflow.providers.ibm.mq.triggers.mq import AwaitMessageTrigger
 
 pytest.importorskip("airflow.providers.common.messaging.providers.base_provider")
@@ -31,6 +32,7 @@ class TestIBMMQMessageQueueProvider:
         from airflow.providers.ibm.mq.queues.mq import IBMMQMessageQueueProvider
 
         self.provider = IBMMQMessageQueueProvider()
+        MESSAGE_QUEUE_PROVIDERS.append(self.provider)
 
     def test_queue_create(self):
         """Test the creation of the provider."""
@@ -119,3 +121,28 @@ class TestIBMMQMessageQueueProvider:
         """Test that trigger_kwargs raises appropriate errors with invalid parameters."""
         with pytest.raises(expected_error, match=error_match):
             self.provider.trigger_kwargs(queue_uri)
+
+    def test_message_queue_trigger_with_scheme(self):
+        trigger = MessageQueueTrigger(
+            scheme="mq",
+            mq_conn_id="mq_default",
+            queue_name="MY.QUEUE.NAME",
+        )
+        assert trigger.queue is None
+        assert trigger.scheme == "mq"
+        assert isinstance(trigger.trigger, AwaitMessageTrigger)
+        assert trigger.trigger.mq_conn_id == "mq_default"
+        assert trigger.trigger.queue_name == "MY.QUEUE.NAME"
+        assert trigger.trigger.poll_interval == 5
+
+    @pytest.mark.filterwarnings("ignore::airflow.exceptions.AirflowProviderDeprecationWarning")
+    def test_message_queue_trigger_with_deprecated_queue(self):
+        trigger = MessageQueueTrigger(
+            queue="mq://mq_default/MY.QUEUE.NAME"
+        )
+        assert trigger.scheme is None
+        assert trigger.queue == "mq://mq_default/MY.QUEUE.NAME"
+        assert isinstance(trigger.trigger, AwaitMessageTrigger)
+        assert trigger.trigger.mq_conn_id == "mq_default"
+        assert trigger.trigger.queue_name == "MY.QUEUE.NAME"
+        assert trigger.trigger.poll_interval == 5
