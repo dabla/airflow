@@ -39,7 +39,7 @@ class IBMMQMessageQueueProvider(BaseMessageQueueProvider):
 
     [START ibmmq_message_queue_provider_description]
 
-    * It uses ``mq`` as scheme for identifying IBM MQ queues.
+    * It uses ``ibmmq`` as scheme for identifying IBM MQ queues.
     * For parameter definitions take a look at
       :class:`~airflow.providers.ibm.mq.triggers.mq.AwaitMessageTrigger`.
 
