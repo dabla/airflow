@@ -247,6 +247,8 @@ class IBMMQHook(BaseHook):
             how long the underlying MQ 'get' operation blocks before checking again.
         :return: The decoded message payload.
         """
+        import ibmmq
+
         backoff = _BACKOFF_BASE
         while True:
             stop_event = threading.Event()
@@ -255,23 +257,42 @@ class IBMMQHook(BaseHook):
             except asyncio.CancelledError:
                 stop_event.set()
                 raise
-            except Exception:
-                self.log.warning(
-                    "IBM MQ consume encountered an error for queue '%s'; retrying in %.1fs",
-                    queue_name,
-                    backoff,
+            except ibmmq.MQMIError as e:
+                if e.reason == ibmmq.CMQC.MQRC_CONNECTION_BROKEN:
+                    self.log.warning(
+                        "Transient MQ error on queue '%s': completion_code=%s reason_code=%s (%s); retrying in %.1fs",
+                        queue_name, e.comp, e.reason, e, backoff,
+                    )
+                    await asyncio.sleep(backoff)
+                    backoff = min(backoff * _BACKOFF_FACTOR, _BACKOFF_MAX)
+                    continue
+                self.log.error(
+                    "Permanent MQ error on queue '%s': completion_code=%s reason_code=%s (%s) -- not retrying",
+                    queue_name, e.comp, e.reason, e,
+                )
+                raise
+            except ibmmq.PYIFError as e:
+                self.log.error(
+                    "PYIFError on queue '%s': %s -- not retrying",
+                    queue_name, e,
+                )
+                raise
+            except Exception as e:
+                # Programming errors should not be retried
+                self.log.error(
+                    "Unexpected error in IBM MQ consume for queue '%s': %s -- not retrying",
+                    queue_name, e,
                     exc_info=True,
                 )
-                await asyncio.sleep(backoff)
-                backoff = min(backoff * _BACKOFF_FACTOR, _BACKOFF_MAX)
-                continue
+                raise
 
             if result is not None:
                 stop_event.set()
                 return result
 
-            self.log.warning(
-                "IBM MQ consume returned no event for queue '%s'; retrying in %.1fs",
+            # Only DEBUG log for quiet queue (no message available)
+            self.log.debug(
+                "IBM MQ consume returned no event for queue '%s'; queue may be quiet. Retrying in %.1fs",
                 queue_name,
                 backoff,
             )
@@ -308,52 +329,38 @@ class IBMMQHook(BaseHook):
         gmo.Options = ibmmq.CMQC.MQGMO_WAIT | ibmmq.CMQC.MQGMO_NO_SYNCPOINT | ibmmq.CMQC.MQGMO_CONVERT
         gmo.WaitInterval = int(poll_interval * 1000)
 
-        try:
-            with self.get_conn() as conn:
-                if self.open_options is not None:
-                    flag_names = self.get_open_options_flags(self.open_options)
-                    self.log.info(
-                        "Opening MQ queue '%s' with open_options=%s (%s)",
-                        queue_name,
-                        self.open_options,
-                        ", ".join(flag_names),
-                    )
+        with self.get_conn() as conn:
+            if self.open_options is not None:
+                flag_names = self.get_open_options_flags(self.open_options)
+                self.log.info(
+                    "Opening MQ queue '%s' with open_options=%s (%s)",
+                    queue_name,
+                    self.open_options,
+                    ", ".join(flag_names),
+                )
 
-                q = ibmmq.Queue(conn, od, self.open_options)
-                try:
-                    # WaitInterval already blocks for poll_interval seconds when no message is
-                    # available, so no additional sleep is needed between iterations.
-                    while not stop_event.is_set():
-                        try:
-                            message = q.get(None, md, gmo)
-                            if message:
-                                return self._process_message(message)
-                        except ibmmq.MQMIError as e:
-                            if e.reason == ibmmq.CMQC.MQRC_NO_MSG_AVAILABLE:
-                                self.log.debug("No message available...")
-                                continue
-                            if e.reason == ibmmq.CMQC.MQRC_CONNECTION_BROKEN:
-                                self.log.warning(
-                                    "MQ connection broken on queue '%s'; will reconnect",
-                                    queue_name,
-                                )
-                                return None
-                            self.log.error(
-                                "IBM MQ error on queue '%s': completion_code=%s reason_code=%s",
-                                queue_name,
-                                e.comp,
-                                e.reason,
-                            )
-                            raise
-                finally:
-                    with suppress(Exception):
-                        q.close()
-        except (ibmmq.MQMIError, ibmmq.PYIFError):
-            self.log.exception(
-                "MQ consume failed on queue '%s'",
-                queue_name,
-            )
-            return None
+            q = ibmmq.Queue(conn, od, self.open_options)
+            try:
+                # WaitInterval already blocks for poll_interval seconds when no message is
+                # available, so no additional sleep is needed between iterations.
+                while not stop_event.is_set():
+                    try:
+                        message = q.get(None, md, gmo)
+                        if message:
+                            return self._process_message(message)
+                    except ibmmq.MQMIError as e:
+                        if e.reason == ibmmq.CMQC.MQRC_NO_MSG_AVAILABLE:
+                            self.log.debug("No message available on queue '%s' (reason=%s)", queue_name, e.reason)
+                            continue
+                        # For all other MQMIError, log and re-raise immediately
+                        self.log.error(
+                            "IBM MQ error on queue '%s': completion_code=%s reason_code=%s (%s)",
+                            queue_name, e.comp, e.reason, e,
+                        )
+                        raise
+            finally:
+                with suppress(Exception):
+                    q.close()
         return None
 
     async def aproduce(self, queue_name: str, payload: str) -> None:

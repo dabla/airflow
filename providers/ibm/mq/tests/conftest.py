@@ -40,20 +40,16 @@ def _ensure_fake_ibmmq_if_missing():
 
     # Create a minimal fake module with the attributes our tests expect.
     fake = ModuleType("ibmmq")
-
-    class MQMIError(Exception):
-        def __init__(self, msg="", reason=None):
-            super().__init__(msg)
-            self.reason = reason
-
-    class PYIFError(Exception):
-        def __init__(self, msg="", reason=None):
-            super().__init__(msg)
-            self.reason = reason
-
+    # https://www.ibm.com/docs/en/ibm-mq/9.4.x?topic=20-cmqc
     fake.CMQC = MagicMock()
-    fake.CMQC.MQRC_NO_MSG_AVAILABLE = 2033
+    fake.CMQC.MQCC_OK = 0
+    fake.CMQC.MQCC_WARNING = 1
+    fake.CMQC.MQCC_FAILED = 2
+    fake.CMQC.MQRC_NONE = 0
     fake.CMQC.MQRC_CONNECTION_BROKEN = 2009
+    fake.CMQC.MQRC_NOT_AUTHORIZED = 2035
+    fake.CMQC.MQRC_UNKNOWN_OBJECT_NAME = 2085
+    fake.CMQC.MQRC_Q_MGR_NAME_ERROR = 2058
     fake.CMQC.MQGMO_NO = 0
     fake.CMQC.MQGMO_NO_WAIT = 0
     fake.CMQC.MQGMO_WAIT = 1
@@ -62,6 +58,34 @@ def _ensure_fake_ibmmq_if_missing():
     fake.CMQC.MQOO_INPUT_EXCLUSIVE = 4
     fake.CMQC.MQOO_INPUT_SHARED = 2
     fake.CMQC.MQOO_FAIL_IF_QUIESCING = 8192
+
+    class MQMIError(Exception):
+        def __init__(self, comp: int | None = None, reason: int | None = None):
+            print("comp: ", comp)
+            print("reason: ", reason)
+            self.comp = comp or fake.CMQC.MQCC_OK
+            self.reason = reason or fake.CMQC.MQRC_NONE
+
+        def __str__(self) -> str:
+            return 'MQI Error. Comp %d, Reason %d: %s' % (self.comp, self.reason, self.error_as_string())
+
+        def error_as_string(self) -> str:
+            """ Return the exception object MQI warning/failed reason as its mnemonic string.
+            """
+            if self.comp == fake.CMQC.MQCC_OK:
+                return 'OK'
+
+            if self.comp == fake.CMQC.MQCC_WARNING:
+                pfx = 'WARNING: '
+            else:
+                pfx = 'FAILED: '
+
+            return pfx + 'Error code ' + str(self.reason) + ' not defined'
+
+    class PYIFError(Exception):
+        def __init__(self, e=""):
+            self.error = e
+
     fake.MQMIError = MQMIError
     fake.PYIFError = PYIFError
     fake.OD = MagicMock()
