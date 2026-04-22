@@ -261,27 +261,36 @@ class IBMMQHook(BaseHook):
                 if e.reason == ibmmq.CMQC.MQRC_CONNECTION_BROKEN:
                     self.log.warning(
                         "Transient MQ error on queue '%s': completion_code=%s reason_code=%s (%s); retrying in %.1fs",
-                        queue_name, e.comp, e.reason, e, backoff,
+                        queue_name,
+                        e.comp,
+                        e.reason,
+                        e,
+                        backoff,
                     )
                     await asyncio.sleep(backoff)
                     backoff = min(backoff * _BACKOFF_FACTOR, _BACKOFF_MAX)
                     continue
                 self.log.error(
                     "Permanent MQ error on queue '%s': completion_code=%s reason_code=%s (%s) -- not retrying",
-                    queue_name, e.comp, e.reason, e,
+                    queue_name,
+                    e.comp,
+                    e.reason,
+                    e,
                 )
                 raise
             except ibmmq.PYIFError as e:
                 self.log.error(
                     "PYIFError on queue '%s': %s -- not retrying",
-                    queue_name, e,
+                    queue_name,
+                    e,
                 )
                 raise
             except Exception as e:
                 # Programming errors should not be retried
                 self.log.error(
                     "Unexpected error in IBM MQ consume for queue '%s': %s -- not retrying",
-                    queue_name, e,
+                    queue_name,
+                    e,
                     exc_info=True,
                 )
                 raise
@@ -349,11 +358,16 @@ class IBMMQHook(BaseHook):
                             return self._process_message(message)
                     except ibmmq.MQMIError as e:
                         if e.reason == ibmmq.CMQC.MQRC_NO_MSG_AVAILABLE:
-                            self.log.debug("No message available on queue '%s' (reason=%s)", queue_name, e.reason)
+                            self.log.debug(
+                                "No message available on queue '%s' (reason=%s)", queue_name, e.reason
+                            )
                             continue
                         self.log.error(
                             "IBM MQ error on queue '%s': completion_code=%s reason_code=%s (%s)",
-                            queue_name, e.comp, e.reason, e,
+                            queue_name,
+                            e.comp,
+                            e.reason,
+                            e,
                         )
                         raise
             finally:

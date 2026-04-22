@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import pytest
 
-from airflow.providers.common.messaging.triggers.msg_queue import MessageQueueTrigger, MESSAGE_QUEUE_PROVIDERS
+from airflow.providers.common.messaging.triggers.msg_queue import MESSAGE_QUEUE_PROVIDERS, MessageQueueTrigger
 from airflow.providers.ibm.mq.triggers.mq import AwaitMessageTrigger
 
 pytest.importorskip("airflow.providers.common.messaging.providers.base_provider")
@@ -139,9 +139,7 @@ class TestIBMMQMessageQueueProvider:
 
     @pytest.mark.filterwarnings("ignore::airflow.exceptions.AirflowProviderDeprecationWarning")
     def test_message_queue_trigger_with_deprecated_queue(self):
-        trigger = MessageQueueTrigger(
-            queue="ibmmq://mq_default/MY.QUEUE.NAME"
-        )
+        trigger = MessageQueueTrigger(queue="ibmmq://mq_default/MY.QUEUE.NAME")
         assert trigger.scheme is None
         assert trigger.queue == "ibmmq://mq_default/MY.QUEUE.NAME"
         assert isinstance(trigger.trigger, AwaitMessageTrigger)
