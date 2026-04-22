@@ -121,7 +121,7 @@ class PartitionableOperator(Generic[T], metaclass=ABCMeta):
         *,
         strict: bool,
         apply_upstream_relationship: bool = True,
-    ) -> 'IterableOperator | MappedIterableOperator':
+    ) -> IterableOperator | MappedIterableOperator:
         """
         Internal method to perform the actual iteration.
 
@@ -161,6 +161,7 @@ class PartitionedOperator(PartitionableOperator[OperatorPartial]):
     :param operator_partial: The OperatorPartial instance to be partitioned and expanded.
     :param size: The number of partitions to create for mapping.
     """
+
     @property
     def params(self) -> ParamsDict | dict:
         return self.operator_partial.params

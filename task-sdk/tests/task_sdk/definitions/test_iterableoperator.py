@@ -372,7 +372,9 @@ class TestIterableOperator:
                 iterable_op.execute(context=context)
 
     @pytest.fixture(autouse=True)
-    def test_execute_with_failed_tasks_and_expired_reschedule_date(self, dag_maker, session, mock_xcom_get_one):
+    def test_execute_with_failed_tasks_and_expired_reschedule_date(
+        self, dag_maker, session, mock_xcom_get_one
+    ):
         """Test executing IterableOperator where certain map_index tasks fail on first attempt and are retried.
 
         This test verifies that:

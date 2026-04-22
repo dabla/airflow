@@ -221,14 +221,18 @@ class OperatorPartial:
         strict: bool,
         apply_upstream_relationship: bool = True,
     ) -> MappedOperator:
-        return self.partition(size=0)._expand(expand_input, strict=strict, apply_upstream_relationship=apply_upstream_relationship)
+        return self.partition(size=0)._expand(
+            expand_input, strict=strict, apply_upstream_relationship=apply_upstream_relationship
+        )
 
     def iterate(self, **mapped_kwargs: OperatorExpandArgument) -> IterableOperator:
         operator = self.partition(size=0).iterate(**mapped_kwargs)
         cast("IterableOperator", operator)
         return operator
 
-    def iterate_kwargs(self, kwargs: OperatorExpandKwargsArgument, *, strict: bool = True) -> IterableOperator:
+    def iterate_kwargs(
+        self, kwargs: OperatorExpandKwargsArgument, *, strict: bool = True
+    ) -> IterableOperator:
         operator = self.partition(size=0).iterate_kwargs(kwargs, strict=strict)
         cast("IterableOperator", operator)
         return operator
