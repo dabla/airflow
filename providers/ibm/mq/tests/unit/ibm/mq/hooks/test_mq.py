@@ -17,7 +17,10 @@
 from __future__ import annotations
 
 import asyncio
+import operator
 import threading
+
+from functools import reduce
 from itertools import count
 from unittest import mock
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -116,6 +119,24 @@ class TestIBMMQHook:
         hook.open_options = open_options
         with hook.get_conn() as conn:
             assert hook.open_options == open_options
+
+    @pytest.mark.parametrize(
+        ("open_options_attr", "expected_flags"),
+        [
+            ("MQGMO_NO_WAIT", []),
+            ("MQOO_INPUT_EXCLUSIVE", ['MQOO_INPUT_EXCLUSIVE']),
+            ("MQOO_INPUT_SHARED", ['MQOO_INPUT_SHARED']),
+            ("MQOO_INPUT_SHARED | MQOO_FAIL_IF_QUIESCING", ['MQOO_INPUT_EXCLUSIVE', 'MQOO_INPUT_SHARED', 'MQOO_FAIL_IF_QUIESCING'])
+        ],
+    )
+    async def test_get_open_options_flags(self, mock_get_connection, open_options_attr, expected_flags):
+        import ibmmq
+
+        open_options = list(map(lambda open_option: getattr(ibmmq.CMQC, open_option), open_options_attr.split("|")))
+        combined_options = reduce(operator.or_, open_options)
+        flags = IBMMQHook.get_open_options_flags(combined_options)
+
+        assert flags == expected_flags
 
     @patch("ibmmq.connect")
     @patch("ibmmq.Queue")
