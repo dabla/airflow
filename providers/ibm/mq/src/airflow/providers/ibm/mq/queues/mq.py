@@ -28,7 +28,8 @@ if TYPE_CHECKING:
     from airflow.triggers.base import BaseEventTrigger
 
 # [START queue_regexp]
-QUEUE_REGEXP = r"^ibmmq://"
+# Matches ibmmq://<conn_id>/<queue_name> (conn_id required, queue_name required)
+QUEUE_REGEXP = r"^ibmmq://[^/]+/.+"
 # [END queue_regexp]
 
 

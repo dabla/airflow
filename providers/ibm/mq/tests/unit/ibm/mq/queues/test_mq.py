@@ -45,6 +45,7 @@ class TestIBMMQMessageQueueProvider:
         ("queue_uri", "expected_result"),
         [
             pytest.param("ibmmq://mq_default/MY.QUEUE.NAME", True, id="valid_mq_uri"),
+            pytest.param("ibmmq://mq_default", False, id="invalid_mq_url"),
             pytest.param("http://example.com", False, id="http_url"),
             pytest.param("not-a-url", False, id="invalid_url"),
         ],
