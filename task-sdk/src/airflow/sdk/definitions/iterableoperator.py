@@ -309,9 +309,7 @@ class IterableOperator(BaseOperator):
 
         return self._run_tasks(context=context, tasks=list(failed_tasks))
 
-    def _run_operator(
-        self, context: Context, task_instance: MappedTaskInstance
-    ):
+    def _run_operator(self, context: Context, task_instance: MappedTaskInstance):
         with TaskExecutor(task_instance=task_instance) as executor:
             return executor.run(
                 context={
@@ -324,9 +322,7 @@ class IterableOperator(BaseOperator):
                 }
             )
 
-    async def _run_async_operator(
-        self, context: Context, task_instance: MappedTaskInstance
-    ):
+    async def _run_async_operator(self, context: Context, task_instance: MappedTaskInstance):
         async with TaskExecutor(task_instance=task_instance) as executor:
             return await executor.arun(
                 context={
@@ -379,9 +375,7 @@ class IterableOperator(BaseOperator):
                 mapped_kwargs=value,
                 jinja_env=jinja_env,
             )
-            for index, value in enumerate(
-                self.expand_input.iter_values(context=context)
-            )
+            for index, value in enumerate(self.expand_input.iter_values(context=context))
         )
         return self._run_tasks(context=context, tasks=tasks)
 
@@ -401,9 +395,7 @@ class IterableOperator(BaseOperator):
                 jinja_env=jinja_env,
                 mapped_kwargs=value,
             )
-            for index, value in enumerate(
-                self.expand_input.iter_values(context=context)
-            )
+            for index, value in enumerate(self.expand_input.iter_values(context=context))
             if index in failed_tasks
         )
         return self._run_tasks(context=context, tasks=tasks)
