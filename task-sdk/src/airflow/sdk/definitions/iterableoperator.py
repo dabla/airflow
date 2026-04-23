@@ -156,11 +156,24 @@ class IterableOperator(BaseOperator):
     def _get_specified_expand_input(self) -> ExpandInput:
         return self.expand_input
 
-    def _unmap_operator(self, mapped_kwargs: Context) -> BaseOperator:
+    def _unmap_operator(
+        self, context: Context, mapped_kwargs: Context, jinja_env: jinja2.Environment
+    ) -> BaseOperator:
+        from airflow.sdk.execution_time.context import context_update_for_unmapped
+
         self._number_of_tasks += 1
         unmapped_task = self._operator.unmap(mapped_kwargs)
         # Make sure deferred operators will always raise a DeferredTask exception when executed
         unmapped_task.start_from_trigger = False
+        context_update_for_unmapped(context, unmapped_task)
+
+        unmapped_task._do_render_template_fields(
+            parent=unmapped_task,
+            template_fields=self._operator.template_fields,
+            context=context,
+            jinja_env=jinja_env,
+            seen_oids={},
+        )
         return unmapped_task
 
     def _xcom_push(self, context: Context, task: MappedTaskInstance, value: Any) -> None:
@@ -180,7 +193,6 @@ class IterableOperator(BaseOperator):
         deferred_tasks: deque[MappedTaskInstance] = deque()
         failed_tasks: deque[MappedTaskInstance] = deque()
         chunked_tasks = batched(tasks, self.max_workers)
-        jinja_env = self.get_template_env(dag=self.dag)
         do_xcom_push = True
 
         self.log.info("Running tasks with %d workers", self.max_workers)
@@ -190,9 +202,9 @@ class IterableOperator(BaseOperator):
                 for task in next(chunked_tasks, []):
                     do_xcom_push = task.do_xcom_push
                     if task.is_async:
-                        future = executor.submit(self._run_async_operator, context, task, jinja_env)
+                        future = executor.submit(self._run_async_operator, context, task)
                     else:
-                        future = executor.submit(self._run_operator, context, task, jinja_env)
+                        future = executor.submit(self._run_operator, context, task)
                     futures[future] = task
 
                 while futures:
@@ -262,9 +274,9 @@ class IterableOperator(BaseOperator):
 
                         for task in next(chunked_tasks, []):
                             if task.is_async:
-                                future = executor.submit(self._run_async_operator, context, task, jinja_env)
+                                future = executor.submit(self._run_async_operator, context, task)
                             else:
-                                future = executor.submit(self._run_operator, context, task, jinja_env)
+                                future = executor.submit(self._run_operator, context, task)
                             futures[future] = task
 
         if not failed_tasks:
@@ -298,9 +310,9 @@ class IterableOperator(BaseOperator):
         return self._run_tasks(context=context, tasks=list(failed_tasks))
 
     def _run_operator(
-        self, context: Context, task_instance: MappedTaskInstance, jinja_env: jinja2.Environment
+        self, context: Context, task_instance: MappedTaskInstance
     ):
-        with TaskExecutor(task_instance=task_instance, jinja_env=jinja_env) as executor:
+        with TaskExecutor(task_instance=task_instance) as executor:
             return executor.run(
                 context={
                     **dict(context),
@@ -313,9 +325,9 @@ class IterableOperator(BaseOperator):
             )
 
     async def _run_async_operator(
-        self, context: Context, task_instance: MappedTaskInstance, jinja_env: jinja2.Environment
+        self, context: Context, task_instance: MappedTaskInstance
     ):
-        async with TaskExecutor(task_instance=task_instance, jinja_env=jinja_env) as executor:
+        async with TaskExecutor(task_instance=task_instance) as executor:
             return await executor.arun(
                 context={
                     **dict(context),
@@ -332,10 +344,11 @@ class IterableOperator(BaseOperator):
         context: Context,
         map_index: int,
         mapped_kwargs: Context,
+        jinja_env: jinja2.Environment,
         try_number: int = 0,
     ) -> MappedTaskInstance:
         run_id = context["ti"].run_id
-        operator = self._unmap_operator(mapped_kwargs)
+        operator = self._unmap_operator(context, mapped_kwargs, jinja_env)
         return self._create_mapped_task(
             run_id=run_id, map_index=map_index, try_number=try_number, operator=operator
         )
@@ -358,18 +371,39 @@ class IterableOperator(BaseOperator):
         )
 
     def execute(self, context: Context):
+        jinja_env = self.get_template_env(dag=self.dag)
         tasks = (
-            self._create_task(context=context, map_index=index, mapped_kwargs=value)
-            for index, value in enumerate(self.expand_input.iter_values(context=context))
+            self._create_task(
+                context=context,
+                map_index=index,
+                mapped_kwargs=value,
+                jinja_env=jinja_env,
+            )
+            for index, value in enumerate(
+                self.expand_input.iter_values(context=context)
+            )
         )
         return self._run_tasks(context=context, tasks=tasks)
 
     def execute_failed_tasks(
-        self, context: Context, try_number: int, failed_tasks: set[int], event: dict[Any, Any]
+        self,
+        context: Context,
+        try_number: int,
+        failed_tasks: set[int],
+        event: dict[Any, Any],
     ):
+        jinja_env = self.get_template_env(dag=self.dag)
         tasks = (
-            self._create_task(context=context, map_index=index, try_number=try_number, mapped_kwargs=value)
-            for index, value in enumerate(self.expand_input.iter_values(context=context))
+            self._create_task(
+                context=context,
+                map_index=index,
+                try_number=try_number,
+                jinja_env=jinja_env,
+                mapped_kwargs=value,
+            )
+            for index, value in enumerate(
+                self.expand_input.iter_values(context=context)
+            )
             if index in failed_tasks
         )
         return self._run_tasks(context=context, tasks=tasks)
