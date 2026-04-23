@@ -40,7 +40,6 @@ from airflow.sdk.execution_time.task_runner import (
 )
 
 if TYPE_CHECKING:
-    import jinja2
     from structlog.typing import FilteringBoundLogger as Logger
 
     from airflow.sdk import Context
