@@ -134,9 +134,7 @@ class TestIBMMQHook:
     async def test_get_open_options_flags(self, mock_get_connection, open_options_attr, expected_flags):
         import ibmmq
 
-        open_options = [
-            getattr(ibmmq.CMQC, open_option) for open_option in open_options_attr.split("|")
-        ]
+        open_options = [getattr(ibmmq.CMQC, open_option) for open_option in open_options_attr.split("|")]
         combined_options = reduce(operator.or_, open_options)
         flags = IBMMQHook.get_open_options_flags(combined_options)
 
@@ -250,7 +248,7 @@ class TestIBMMQHook:
             side_effect=[
                 ibmmq.MQMIError(comp=ibmmq.CMQC.MQCC_FAILED, reason=ibmmq.CMQC.MQRC_CONNECTION_BROKEN),
                 "recovered",
-            ]
+            ],
         ):
             result = await self.hook.aconsume(queue_name="QUEUE1", poll_interval=0.1)
 
@@ -297,7 +295,7 @@ class TestIBMMQHook:
             side_effect=[
                 ibmmq.MQMIError(comp=ibmmq.CMQC.MQCC_FAILED, reason=ibmmq.CMQC.MQRC_CONNECTION_BROKEN),
                 "ok",
-            ]
+            ],
         ):
             with caplog.at_level("WARNING"):
                 await self.hook.aconsume(queue_name="QUEUE1", poll_interval=0.1)
