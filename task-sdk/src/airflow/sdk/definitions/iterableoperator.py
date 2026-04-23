@@ -172,7 +172,7 @@ class IterableOperator(BaseOperator):
             template_fields=self._operator.template_fields,
             context=context,
             jinja_env=jinja_env,
-            seen_oids={},
+            seen_oids=set(),
         )
         return unmapped_task
 
