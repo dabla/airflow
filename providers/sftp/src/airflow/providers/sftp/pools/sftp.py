@@ -79,7 +79,7 @@ class SFTPClientPool(LoggingMixin):
         self._init_lock = asyncio.Lock()
         self._initialized = False
         self._closed = False
-        self.log.info("SFTPClientPool initialised...")
+        self.log.info("SFTPClientPool with size %d initialised...", self.pool_size)
 
     async def _ensure_initialized(self):
         """Ensure pool is usable (also handles re-opening after close)."""
@@ -88,7 +88,11 @@ class SFTPClientPool(LoggingMixin):
 
         async with self._init_lock:
             if not self._initialized or self._closed:
-                self.log.info("Initializing / resetting SFTPClientPool for '%s'", self.sftp_conn_id)
+                self.log.info(
+                    "Initializing / resetting SFTPClientPool for '%s' with size %d",
+                    self.sftp_conn_id,
+                    self.pool_size,
+                )
                 self._idle = asyncio.LifoQueue()
                 self._in_use.clear()
                 self._semaphore = asyncio.Semaphore(self.pool_size)
@@ -99,12 +103,7 @@ class SFTPClientPool(LoggingMixin):
         self,
     ) -> tuple[asyncssh.SSHClientConnection, asyncssh.SFTPClient]:
         ssh_conn = await SFTPHookAsync(sftp_conn_id=self.sftp_conn_id)._get_conn()
-        try:
-            sftp = await ssh_conn.start_sftp_client()
-        except Exception:
-            with suppress(Exception):
-                ssh_conn.close()
-            raise
+        sftp = await ssh_conn.start_sftp_client()
         self.log.info("Created new SFTP connection for sftp_conn_id '%s'", self.sftp_conn_id)
         return ssh_conn, sftp
 
@@ -130,13 +129,12 @@ class SFTPClientPool(LoggingMixin):
             self._semaphore.release()
             raise
 
-    async def _close_connection_pair(self, pair) -> None:
+    def _close_connection_pair(self, pair) -> None:
         ssh, sftp = pair
         with suppress(Exception):
             sftp.exit()
         with suppress(Exception):
             ssh.close()
-            await ssh.wait_closed()
 
     async def release(self, pair):
         if pair not in self._in_use:
@@ -146,7 +144,7 @@ class SFTPClientPool(LoggingMixin):
         self._in_use.discard(pair)
 
         if self._closed:
-            await self._close_connection_pair(pair)
+            self._close_connection_pair(pair)
         else:
             await self._idle.put(pair)
 
@@ -165,7 +163,7 @@ class SFTPClientPool(LoggingMixin):
             self.log.warning("Dropping faulty connection for '%s': %s", self.sftp_conn_id, e)
             if pair:
                 self._in_use.discard(pair)
-                await self._close_connection_pair(pair)
+                self._close_connection_pair(pair)
                 self._semaphore.release()
             raise
         else:
@@ -183,11 +181,11 @@ class SFTPClientPool(LoggingMixin):
 
             while not self._idle.empty():
                 pair = await self._idle.get()
-                await self._close_connection_pair(pair)
+                self._close_connection_pair(pair)
 
             active_in_use = len(self._in_use)
             for pair in list(self._in_use):
-                await self._close_connection_pair(pair)
+                self._close_connection_pair(pair)
                 self._in_use.discard(pair)
 
             if active_in_use:
