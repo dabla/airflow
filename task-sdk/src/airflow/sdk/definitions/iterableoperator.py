@@ -348,7 +348,7 @@ class IterableOperator(BaseOperator):
         try_number: int = 0,
     ) -> MappedTaskInstance:
         run_id = context["ti"].run_id
-        operator = self._unmap_operator(context, mapped_kwargs, jinja_env)
+        operator = self._unmap_operator(context.copy(), mapped_kwargs, jinja_env)
         return self._create_mapped_task(
             run_id=run_id, map_index=map_index, try_number=try_number, operator=operator
         )
