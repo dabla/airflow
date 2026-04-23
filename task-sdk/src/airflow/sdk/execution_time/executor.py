@@ -146,11 +146,13 @@ class TaskExecutor(LoggingMixin):
         return self.task_instance.is_async
 
     def run(self, context: Context):
-        self.operator.render_template_fields(context=context, jinja_env=self.jinja_env)
+        if self.operator.template_fields:
+            self.operator.render_template_fields(context=context, jinja_env=self.jinja_env)
         return _execute_task(context, self.task_instance, self.log)
 
     async def arun(self, context: Context):
-        self.operator.render_template_fields(context=context, jinja_env=self.jinja_env)
+        if self.operator.template_fields:
+            self.operator.render_template_fields(context=context, jinja_env=self.jinja_env)
         return await _execute_async_task(context, self.task_instance, self.log)
 
     def __enter__(self):
