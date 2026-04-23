@@ -227,15 +227,13 @@ class OperatorPartial:
 
     def iterate(self, **mapped_kwargs: OperatorExpandArgument) -> IterableOperator:
         operator = self.partition(size=0).iterate(**mapped_kwargs)
-        cast("IterableOperator", operator)
-        return operator
+        return cast("IterableOperator", operator)
 
     def iterate_kwargs(
         self, kwargs: OperatorExpandKwargsArgument, *, strict: bool = True
     ) -> IterableOperator:
         operator = self.partition(size=0).iterate_kwargs(kwargs, strict=strict)
-        cast("IterableOperator", operator)
-        return operator
+        return cast("IterableOperator", operator)
 
     def partition(self, size: int) -> PartitionedOperator:
         """Return a PartitionedOperator for partitioned mapping."""
