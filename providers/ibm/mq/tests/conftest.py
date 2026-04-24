@@ -70,7 +70,7 @@ def _ensure_fake_ibmmq_if_missing():
             return "MQI Error. Comp %d, Reason %d: %s" % (self.comp, self.reason, self.error_as_string())
 
         def error_as_string(self) -> str:
-            """ Return the exception object MQI warning/failed reason as its mnemonic string."""
+            """Return the exception object MQI warning/failed reason as its mnemonic string."""
             if self.comp == fake.CMQC.MQCC_OK:
                 return "OK"
 

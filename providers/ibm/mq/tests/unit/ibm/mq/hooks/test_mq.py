@@ -19,7 +19,6 @@ from __future__ import annotations
 import asyncio
 import operator
 import threading
-
 from functools import reduce
 from itertools import count
 from unittest import mock
