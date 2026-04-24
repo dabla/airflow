@@ -224,6 +224,14 @@ git fetch apache
 
 - We currently release Helm Chart from `main` branch:
 
+For releasing 1.2x.0
+
+```shell
+git checkout apache/chart/v1-2x-test
+```
+
+For releasing 2.x.x and onwards
+
 ```shell
 git checkout apache/main
 ```
@@ -391,7 +399,7 @@ Content is generated with:
 
 ```shell
 breeze release-management generate-issue-content-helm-chart \
---previous-release helm-chart/<PREVIOUS_RELEASE> --current-release helm-chart/${VERSION}${VERSION_SUFFIX}
+--previous-release helm-chart/${PREVIOUS_VERSION_WITH_SUFFIX} --current-release helm-chart/${VERSION}${VERSION_SUFFIX}
 ```
 
 Copy the URL of the issue.
@@ -447,7 +455,7 @@ gpg:                using RSA key E1A1E984F55B8F280BD9CBA20BB7163892A2E48E
 gpg: Good signature from "Jed Cunningham <jedcunningham@apache.org>" [ultimate]
 plugin: Chart SHA verified. sha256:b33eac716e0416a18af89fb4fa1043fcfcf24f9f903cda3912729815213525df
 
-The documentation is available at https://airflow.staged.apache.org/helm-chart/${VERSION}/.
+The documentation is available at https://airflow.staged.apache.org/docs/helm-chart/${VERSION}/index.html.
 
 The vote will be open for at least 72 hours ($VOTE_END_TIME UTC) or until the necessary number of votes is reached.
 
@@ -470,7 +478,7 @@ https://github.com/apache/airflow/blob/main/dev/README_RELEASE_HELM_CHART.md#ver
 
 Consider this my (binding) +1.
 
-For license checks, the .rat-excludes files is included, so you can run the following to verify licenses (just update your path to rat):
+For license checks, the .rat-excludes files are included, so you can run the following to verify licenses (just update your path to rat):
 
 tar -xvf airflow-chart-${VERSION}-source.tar.gz
 cd airflow-chart-${VERSION}
