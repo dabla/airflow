@@ -171,11 +171,12 @@ class LazyXComSequence(Sequence[T]):
 class XComIterable(Sequence):
     """An iterable that lazily fetches XCom values one by one instead of loading all at once."""
 
-    def __init__(self, task_id: str, dag_id: str, run_id: str, length: int):
+    def __init__(self, task_id: str, dag_id: str, run_id: str, length: int, map_index: int | None = None):
         self.task_id = task_id
         self.dag_id = dag_id
         self.run_id = run_id
         self.length = length
+        self.map_index = map_index
 
     def __iter__(self) -> Iterator:
         return _XComIterator(self)
@@ -203,6 +204,7 @@ class XComIterable(Sequence):
             dag_id=self.dag_id,
             task_id=self.task_id,
             run_id=self.run_id,
+            map_index=self.map_index,
         )
 
     def serialize(self) -> dict:
@@ -212,6 +214,7 @@ class XComIterable(Sequence):
             "dag_id": self.dag_id,
             "run_id": self.run_id,
             "length": self.length,
+            "map_index": self.map_index,
         }
 
     @classmethod

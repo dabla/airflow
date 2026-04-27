@@ -48,7 +48,6 @@ from airflow.sdk.exceptions import (
     TaskDeferred,
 )
 from airflow.sdk.execution_time.executor import ConcurrentExecutor, TaskExecutor, collect_futures
-from airflow.sdk.execution_time.lazy_sequence import XComIterable
 from airflow.sdk.execution_time.task_runner import MappedTaskInstance
 
 if TYPE_CHECKING:
@@ -56,6 +55,7 @@ if TYPE_CHECKING:
 
     from airflow.sdk.definitions._internal.expandinput import ExpandInput
     from airflow.sdk.definitions.context import Context
+    from airflow.sdk.execution_time.lazy_sequence import XComIterable
 
 
 class IterableOperator(BaseOperator):
@@ -283,11 +283,14 @@ class IterableOperator(BaseOperator):
             if exceptions:
                 raise BaseExceptionGroup("Multiple sub-task failures", exceptions)
             if do_xcom_push:
+                from airflow.sdk.execution_time.lazy_sequence import XComIterable
+
                 return XComIterable(
                     task_id=self.task_id,
                     dag_id=self.dag_id,
                     run_id=context["run_id"],
                     length=self._number_of_tasks,
+                    map_index=context["ti"].map_index,
                 )
             return None
 
