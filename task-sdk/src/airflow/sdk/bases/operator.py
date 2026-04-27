@@ -381,8 +381,6 @@ else:
         partial_kwargs.update((k, v) for k, v in OPERATOR_DEFAULTS.items() if k not in partial_kwargs)
 
         # Post-process arguments. Should be kept in sync with _TaskDecorator.expand().
-        if "task_concurrency" in kwargs:  # Reject deprecated option.
-            raise TypeError("unexpected argument: task_concurrency")
         if start_date := partial_kwargs.get("start_date", None):
             partial_kwargs["start_date"] = timezone.convert_to_utc(start_date)
         if end_date := partial_kwargs.get("end_date", None):
@@ -825,6 +823,8 @@ class BaseOperator(AbstractOperator, metaclass=BaseOperatorMeta):
         key in the returned dictionary result. If False and do_xcom_push is True, pushes a single XCom.
     :param task_group: The TaskGroup to which the task should belong. This is typically provided when not
         using a TaskGroup as a context manager.
+    :param task_concurrency: The maximum number of threads that will be used when the operator is used
+        with Dynamic Task Iteration (default is the number of threads available on the executor).
     :param doc: Add documentation or notes to your Task objects that is visible in
         Task Instance details View in the Webserver
     :param doc_md: Add documentation (in Markdown format) or notes to your Task objects
@@ -1071,6 +1071,7 @@ class BaseOperator(AbstractOperator, metaclass=BaseOperatorMeta):
         inlets: Any | None = None,
         outlets: Any | None = None,
         task_group: TaskGroup | None = None,
+        task_concurrency: int | None = None,
         doc: str | None = None,
         doc_md: str | None = None,
         doc_json: str | None = None,
@@ -1094,6 +1095,7 @@ class BaseOperator(AbstractOperator, metaclass=BaseOperatorMeta):
 
         super().__init__()
         self.task_group = task_group
+        self.task_concurrency = task_concurrency
 
         kwargs.pop("_airflow_mapped_validation_only", None)
         if kwargs:
@@ -1539,6 +1541,7 @@ class BaseOperator(AbstractOperator, metaclass=BaseOperatorMeta):
                     "_BaseOperator__from_mapped",
                     "on_failure_fail_dagrun",
                     "task_group",
+                    "task_concurrency",
                     "_task_type",
                     "operator_extra_links",
                     "on_execute_callback",

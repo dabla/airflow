@@ -107,14 +107,13 @@ class TestIterableOperator:
         :param task_id: Task ID for the operator
         :param do_xcom_push: Whether to push XCom (default True)
         """
-        partial_operator = MockOperator.partial(
+        return MockOperator.partial(
             task_id=task_id,
             dag=dag,
             retries=retries,
+            task_concurrency=task_concurrency,
             do_xcom_push=do_xcom_push,
-        )
-        partial_operator.kwargs["task_concurrency"] = task_concurrency
-        return partial_operator._expand(
+        )._expand(
             expand_input,
             strict=True,
             apply_upstream_relationship=False,
