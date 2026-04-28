@@ -397,7 +397,6 @@ class TestGenericTransfer:
                     page_size=1000,  # Enable pagination
                     insert_args=INSERT_ARGS,
                     execution_timeout=timedelta(hours=1),
-                    deferrable=False,  # Explicitly non-deferred
                 )
 
                 operator.execute(context=mock_context(task=operator))
