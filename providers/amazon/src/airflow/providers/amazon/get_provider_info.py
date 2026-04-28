@@ -248,6 +248,13 @@ def get_provider_info():
                 "tags": ["aws"],
             },
             {
+                "integration-name": "Amazon S3 Tables",
+                "external-doc-url": "https://aws.amazon.com/s3/features/tables/",
+                "logo": "/docs/integration-logos/Amazon-Simple-Storage-Service-S3_light-bg@4x.png",
+                "how-to-guide": ["/docs/apache-airflow-providers-amazon/operators/s3tables/s3tables.rst"],
+                "tags": ["aws"],
+            },
+            {
                 "integration-name": "Amazon Systems Manager (SSM)",
                 "external-doc-url": "https://aws.amazon.com/systems-manager/",
                 "logo": "/docs/integration-logos/AWS-Systems-Manager_light-bg@4x.png",
@@ -277,7 +284,10 @@ def get_provider_info():
                 "integration-name": "AWS Glue",
                 "external-doc-url": "https://aws.amazon.com/glue/",
                 "logo": "/docs/integration-logos/AWS-Glue_light-bg@4x.png",
-                "how-to-guide": ["/docs/apache-airflow-providers-amazon/operators/glue.rst"],
+                "how-to-guide": [
+                    "/docs/apache-airflow-providers-amazon/operators/glue.rst",
+                    "/docs/apache-airflow-providers-amazon/operators/glue_catalog.rst",
+                ],
                 "tags": ["aws"],
             },
             {
@@ -355,6 +365,13 @@ def get_provider_info():
                 "how-to-guide": ["/docs/apache-airflow-providers-amazon/operators/mwaa.rst"],
                 "tags": ["aws"],
             },
+            {
+                "integration-name": "Amazon S3 Vectors",
+                "external-doc-url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-vectors.html",
+                "logo": "/docs/integration-logos/Amazon-Simple-Storage-Service-S3_light-bg@4x.png",
+                "how-to-guide": ["/docs/apache-airflow-providers-amazon/operators/s3_vectors.rst"],
+                "tags": ["aws"],
+            },
         ],
         "operators": [
             {
@@ -421,6 +438,7 @@ def get_provider_info():
                 "integration-name": "AWS Glue",
                 "python-modules": [
                     "airflow.providers.amazon.aws.operators.glue",
+                    "airflow.providers.amazon.aws.operators.glue_catalog",
                     "airflow.providers.amazon.aws.operators.glue_crawler",
                 ],
             },
@@ -439,6 +457,10 @@ def get_provider_info():
             {
                 "integration-name": "Amazon Simple Storage Service (S3)",
                 "python-modules": ["airflow.providers.amazon.aws.operators.s3"],
+            },
+            {
+                "integration-name": "Amazon S3 Tables",
+                "python-modules": ["airflow.providers.amazon.aws.operators.s3tables"],
             },
             {
                 "integration-name": "Amazon SageMaker",
@@ -494,6 +516,10 @@ def get_provider_info():
             {
                 "integration-name": "Amazon Neptune",
                 "python-modules": ["airflow.providers.amazon.aws.operators.neptune"],
+            },
+            {
+                "integration-name": "Amazon S3 Vectors",
+                "python-modules": ["airflow.providers.amazon.aws.operators.s3_vectors"],
             },
         ],
         "sensors": [
@@ -1084,6 +1110,7 @@ def get_provider_info():
         "connection-types": [
             {
                 "hook-class-name": "airflow.providers.amazon.aws.hooks.base_aws.AwsGenericHook",
+                "hook-name": "Amazon Web Services",
                 "connection-type": "aws",
                 "ui-field-behaviour": {
                     "hidden-fields": ["host", "schema", "port"],
@@ -1097,6 +1124,7 @@ def get_provider_info():
             },
             {
                 "hook-class-name": "airflow.providers.amazon.aws.hooks.chime.ChimeWebhookHook",
+                "hook-name": "Amazon Chime Webhook",
                 "connection-type": "chime",
                 "ui-field-behaviour": {
                     "hidden-fields": ["login", "port", "extra"],
@@ -1110,6 +1138,7 @@ def get_provider_info():
             },
             {
                 "hook-class-name": "airflow.providers.amazon.aws.hooks.emr.EmrHook",
+                "hook-name": "Amazon Elastic MapReduce",
                 "connection-type": "emr",
                 "ui-field-behaviour": {
                     "hidden-fields": ["host", "schema", "port", "login", "password"],
@@ -1121,11 +1150,13 @@ def get_provider_info():
             },
             {
                 "hook-class-name": "airflow.providers.amazon.aws.hooks.redshift_sql.RedshiftSQLHook",
+                "hook-name": "Amazon Redshift",
                 "connection-type": "redshift",
                 "ui-field-behaviour": {"relabeling": {"login": "User", "schema": "Database"}},
             },
             {
                 "hook-class-name": "airflow.providers.amazon.aws.hooks.athena_sql.AthenaSQLHook",
+                "hook-name": "Amazon Athena",
                 "connection-type": "athena",
                 "ui-field-behaviour": {
                     "hidden-fields": ["host", "port"],
