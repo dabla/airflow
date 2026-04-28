@@ -25,24 +25,18 @@
 Changelog
 ---------
 
-1.34.0
+1.36.0
 ......
 
-Features
-~~~~~~~~
+.. warning::
+   **Breaking Change:** The default execution mode for paginated (``page_size`` + string SQL) GenericTransfer tasks has changed. Previously, these tasks always ran in deferred mode (using deferrable execution). Starting with this release, they now run synchronously by default unless you explicitly opt in to deferrable mode.
 
-* ``Simplify default rows limit return result (#64183)``
+   This is a silent behavior change for any existing DAG using paginated GenericTransfer. If you want to restore the old behavior (always defer execution):
 
-Bug Fixes
-~~~~~~~~~
+   1. Pass ``deferrable=True`` to each affected GenericTransfer task, **or**
+   2. Set the global config option ``[operators] default_deferrable = true`` to make all operators deferrable by default.
 
-* ``Removed logging of rows length in SQLInsertRowsOperator to avoid crash on non materialized rows (#63346)``
-* ``Fix provider YAML validation for common SQL analytics operator (#63393)``
-
-Misc
-~~~~
-
-* ``Add Python 3.14 Support (#63520)``
+   Review your DAGs and configuration if you rely on deferred execution for paginated GenericTransfer tasks.
 
 .. Below changes are excluded from the changelog. Move them to
    appropriate section above if needed. Do not delete the lines(!):
