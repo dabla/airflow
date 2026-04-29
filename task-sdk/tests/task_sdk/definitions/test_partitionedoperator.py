@@ -32,7 +32,6 @@ from airflow.sdk.execution_time.comms import (
     XComSequenceSliceResult,
 )
 
-
 RunTI = Callable[[DAG, str, int], TaskInstanceState]
 
 
