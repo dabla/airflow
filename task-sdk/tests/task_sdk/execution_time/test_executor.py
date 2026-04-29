@@ -240,11 +240,11 @@ class TestTaskExecutor:
         with pytest.raises(ValueError, match="map_index should not be None"):
             _ = executor.task_index
 
-    def test_key_property_returns_xcom_key(self):
+    def test_xcom_key_property_returns_xcom_key(self):
         ti = _make_mapped_ti(task_id="op", map_index=2)
         executor = TaskExecutor(task_instance=ti)
-        assert executor.key == ti.xcom_key
-        assert executor.key == "op_2"
+        assert executor.xcom_key == ti.xcom_key
+        assert executor.xcom_key == "op_2"
 
     def test_operator_property(self):
         ti = _make_mapped_ti()
