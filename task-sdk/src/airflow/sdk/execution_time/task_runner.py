@@ -713,13 +713,14 @@ class RuntimeTaskInstance(TaskInstance):
 class MappedTaskInstance(RuntimeTaskInstance, LoggingMixin):
     """Mapped task instance to run an operator which handles XCom's in memory."""
 
+    index: int
     xcoms: dict[str, Any] = Field(default_factory=dict)
 
     def __init__(self, /, **data: Any):
         super().__init__(**data)
 
-        if self.map_index is None or self.map_index < 0:
-            raise ValueError("MappedTaskInstance requires map_index >= 0")
+        if self.index is None or self.index < 0:
+            raise ValueError("MappedTaskInstance requires index >= 0")
 
     def xcom_pull(
         self,
@@ -753,7 +754,7 @@ class MappedTaskInstance(RuntimeTaskInstance, LoggingMixin):
         key: str,
         value: Any,
     ):
-        key = f"{self.task_id}_{self.dag_id}_{key}_{self.map_index}"
+        key = f"{self.task_id}_{self.dag_id}_{key}_{self.index}"
         self.xcoms[key] = value
 
     def next_retry_datetime(self):
@@ -817,7 +818,7 @@ class MappedTaskInstance(RuntimeTaskInstance, LoggingMixin):
 
     @property
     def xcom_key(self) -> str:
-        return f"{self.task_id}_{self.map_index}"
+        return f"{self.task_id}_{self.index}"
 
     @property
     def do_xcom_push(self) -> bool:

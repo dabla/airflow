@@ -131,7 +131,7 @@ class TaskExecutor(LoggingMixin):
         return map_index
 
     @property
-    def key(self):
+    def xcom_key(self):
         return self.task_instance.xcom_key
 
     @property

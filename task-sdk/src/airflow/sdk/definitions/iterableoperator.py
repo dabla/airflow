@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import asyncio
+import copy
 import os
 from collections import deque
 from collections.abc import Iterable, Mapping, Sequence
@@ -341,25 +342,27 @@ class IterableOperator(BaseOperator):
     def _create_task(
         self,
         context: Context,
-        map_index: int,
+        index: int,
         mapped_kwargs: Context,
         jinja_env: jinja2.Environment,
         try_number: int = 0,
     ) -> MappedTaskInstance:
         run_id = context["ti"].run_id
+        map_index = context["ti"].map_index
         operator = self._unmap_operator(context.copy(), mapped_kwargs, jinja_env)
         return self._create_mapped_task(
-            run_id=run_id, map_index=map_index, try_number=try_number, operator=operator
+            run_id=run_id, map_index=map_index, index=index, try_number=try_number, operator=operator
         )
 
     def _create_mapped_task(
-        self, run_id: str, map_index: int, try_number: int, operator: BaseOperator
+        self, run_id: str, map_index: int | None, index: int, try_number: int, operator: BaseOperator
     ) -> MappedTaskInstance:
         return MappedTaskInstance.model_construct(
             task_id=operator.task_id,
             dag_id=operator.dag_id,
             run_id=run_id,
             map_index=map_index,
+            index=index,
             max_tries=operator.retries,
             start_date=self.start_date,
             state=TaskInstanceState.SCHEDULED.value,
@@ -374,7 +377,7 @@ class IterableOperator(BaseOperator):
         tasks = (
             self._create_task(
                 context=context,
-                map_index=index,
+                index=index,
                 mapped_kwargs=value,
                 jinja_env=jinja_env,
             )
@@ -393,7 +396,7 @@ class IterableOperator(BaseOperator):
         tasks = (
             self._create_task(
                 context=context,
-                map_index=index,
+                index=index,
                 try_number=try_number,
                 jinja_env=jinja_env,
                 mapped_kwargs=value,
@@ -420,6 +423,8 @@ class MappedIterableOperator(MappedOperator):
         self.__attrs_post_init__()
 
     def __getattr__(self, name):
+        if name.startswith("__") and name.endswith("__"):
+            raise AttributeError(f"{type(self).__name__!r} object has no attribute {name!r}")
         return getattr(self.delegate, name)
 
     def prepare_for_execution(self) -> MappedOperator:
@@ -434,7 +439,7 @@ class MappedIterableOperator(MappedOperator):
 
     def unmap(self, resolve: Mapping[str, Any]) -> BaseOperator:
         return IterableOperator(
-            operator=self.delegate,
+            operator=copy.deepcopy(self.delegate),
             expand_input=PartitionedExpandInput(self.expand_input, self.partition_size),
             _airflow_from_mapped=True,
         )
