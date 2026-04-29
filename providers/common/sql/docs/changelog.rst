@@ -40,8 +40,6 @@ Changelog
 
 .. Below changes are excluded from the changelog. Move them to
    appropriate section above if needed. Do not delete the lines(!):
-   * ``Fix flaky test_run_no_log in DbApiHook by verifying caplog text instead of length. (#63860)``
-   * ``Add *.iml to .gitignore in all distributions (#63636)``
 
 1.35.0
 ......
