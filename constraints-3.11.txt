@@ -1,6 +1,6 @@
 
 #
-# This constraints file was automatically generated on 2026-07-06T22:57:04.383400
+# This constraints file was automatically generated on 2026-07-09T13:59:56.392320
 # via `uv pip install --resolution highest` for the "main" branch of Airflow.
 # This variant of constraints install uses the HEAD of the branch version for 'apache-airflow' but installs
 # the providers from PIP-released packages at the moment of the constraint generation.
@@ -47,7 +47,7 @@ Jinja2==3.1.6
 Mako==1.3.12
 Markdown==3.10.2
 MarkupSafe==3.0.3
-PyAthena==3.32.0
+PyAthena==3.33.0
 PyGithub==2.9.1
 PyHive==0.7.0
 PyJWT==2.13.0
@@ -74,7 +74,7 @@ aiomysql==0.3.2
 aiosignal==1.4.0
 aiosmtplib==5.1.2
 aiosqlite==0.21.0
-airbyte-api==0.53.0
+airbyte-api==1.0.1
 akeyless==5.0.28
 alembic==1.18.5
 alibabacloud-adb20211201==3.7.0
@@ -97,7 +97,7 @@ apache-airflow-providers-apache-iceberg==1.4.1
 apache-airflow-providers-databricks==6.13.0
 apache-airflow-providers-google==22.1.0
 apispec==6.10.0
-apprise==1.11.0
+apprise==1.12.0
 argcomplete==3.7.0
 arrow==1.4.0
 asana==5.2.5
@@ -121,7 +121,7 @@ azure-mgmt-compute==38.1.0
 azure-mgmt-containerinstance==10.1.0
 azure-mgmt-containerregistry==15.0.0
 azure-mgmt-core==1.6.0
-azure-mgmt-cosmosdb==9.9.0
+azure-mgmt-cosmosdb==10.0.0
 azure-mgmt-datafactory==9.3.0
 azure-mgmt-datalake-nspkg==3.0.1
 azure-mgmt-datalake-store==0.5.0
@@ -177,7 +177,6 @@ croniter==6.2.3
 cryptography==48.0.1
 curlify==3.0.0
 databricks-sql-connector==2.0.2
-dataclasses-json==0.6.7
 datadog==0.52.2
 db-dtypes==1.7.0
 debugpy==1.8.21
@@ -199,13 +198,13 @@ entrypoints==0.4
 eventlet==0.41.0
 executing==2.2.1
 facebook_business==25.0.2
-fastapi-cli==0.0.27
+fastapi-cli==0.0.28
 fastapi==0.136.3
 fastavro==1.12.2
-fastcore==1.13.9
+fastcore==1.14.1
 fastjsonschema==2.21.2
 fastuuid==0.14.0
-filelock==3.29.4
+filelock==3.29.5
 flask-appbuilder==5.2.1
 flask-babel==4.0.0
 flower==2.0.1
@@ -303,7 +302,7 @@ httpr==0.4.8
 httptools==0.8.0
 httpx2==2.5.0
 httpx==0.28.1
-huggingface_hub==1.21.0
+huggingface_hub==1.22.0
 humanize==4.16.0
 hvac==2.4.0
 hyperframe==6.1.0
@@ -334,7 +333,6 @@ joblib==1.5.3
 joserfc==1.7.2
 jpype1==1.7.1
 jsonpath-ng==1.8.0
-jsonpath-python==1.1.6
 jsonschema-specifications==2025.9.1
 jsonschema==4.26.0
 jupyter_client==8.9.1
@@ -359,7 +357,7 @@ lxml==6.1.1
 lz4==4.4.5
 markdown-it-py==4.2.0
 marshmallow-sqlalchemy==1.5.0
-marshmallow==3.26.2
+marshmallow==4.3.0
 matplotlib-inline==0.2.2
 mdit-py-plugins==0.6.1
 mdurl==0.1.2
@@ -464,9 +462,9 @@ pyasn1_modules==0.4.2
 pycountry==26.2.16
 pycparser==3.0
 pycryptodome==3.23.0
-pydantic-ai-slim==2.3.0
+pydantic-ai-slim==2.5.0
 pydantic-extra-types==2.11.1
-pydantic-graph==2.3.0
+pydantic-graph==2.5.0
 pydantic-settings==2.14.2
 pydantic==2.13.4
 pydantic_core==2.46.4
@@ -486,7 +484,7 @@ pyspnego==0.12.1
 python-arango==8.3.3
 python-daemon==3.1.2
 python-dateutil==2.9.0.post0
-python-discovery==1.4.2
+python-discovery==1.4.3
 python-dotenv==1.2.2
 python-http-client==3.3.7
 python-jenkins==1.8.3
@@ -498,7 +496,7 @@ python-telegram-bot==22.8
 python3-saml==1.16.0
 pytokens==0.4.1
 pytz==2026.2
-pyvespa==1.2.3
+pyvespa==1.2.4
 pywinrm==0.5.0
 pyzmq==27.1.0
 qdrant-client==1.18.0
@@ -526,7 +524,7 @@ s3transfer==0.17.1
 sagemaker_studio==1.0.26
 scikit-learn==1.9.0
 scipy==1.17.1
-scramp==1.4.10
+scramp==1.4.12
 scrapbook==0.5.0
 segment-analytics-python==2.3.6
 sendgrid==6.12.5
@@ -577,10 +575,9 @@ tqdm==4.68.3
 traitlets==5.15.1
 trino==0.338.0
 truststore==0.10.4
-typer==0.25.1
+typer==0.26.8
 types-protobuf==7.34.1.20260518
 types-requests==2.33.0.20260518
-typing-inspect==0.9.0
 typing-inspection==0.4.2
 typing_extensions==4.16.0
 tzdata==2026.2
@@ -591,7 +588,7 @@ uritemplate==4.2.0
 urllib3==2.7.0
 uuid6==2025.0.1
 uv==0.11.26
-uvicorn==0.49.0
+uvicorn==0.50.0
 uvloop==0.22.1
 validators==0.35.0
 vertica-python==1.4.0
@@ -612,7 +609,7 @@ yandex-query-client==0.1.4
 yandexcloud==0.397.0
 yarl==1.24.2
 ydb-dbapi==0.1.22
-ydb==3.29.6
+ydb==3.29.7
 zeep==4.3.3
 zenpy==2.0.57
 zipp==4.1.0
