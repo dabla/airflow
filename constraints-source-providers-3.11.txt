@@ -1,6 +1,6 @@
 
 #
-# This constraints file was automatically generated on 2026-07-09T13:55:05.865790
+# This constraints file was automatically generated on 2026-07-13T08:26:09.810653
 # via `uv sync --resolution highest for the "main" branch of Airflow.
 # This variant of constraints install uses the HEAD of the branch version of both
 # 'apache-airflow' package and all available community provider distributions.
@@ -99,6 +99,7 @@ atlassian-python-api==4.0.7
 attrs==26.1.0
 aws-sam-translator==1.111.0
 aws-xray-sdk==2.15.0
+azure-ai-projects==2.2.0
 azure-batch==14.2.0
 azure-common==1.1.28
 azure-core==1.41.0
@@ -216,7 +217,7 @@ fastmcp-slim==3.4.2
 fastuuid==0.14.0
 filelock==3.29.5
 filetype==1.2.0
-flask-appbuilder==5.2.1
+flask-appbuilder==5.2.2
 flask-babel==4.0.0
 flit==3.12.0
 flit_core==3.12.0
@@ -344,6 +345,7 @@ influxdb-client==1.50.0
 influxdb3-python==0.20.0
 iniconfig==2.3.0
 inputimeout==1.0.4
+invoke==3.0.3
 ipdb==0.13.13
 ipykernel==7.3.0
 ipython==9.15.0
@@ -492,7 +494,7 @@ pandas-stubs==3.0.3.260530
 pandas==2.3.3
 pandocfilters==1.5.1
 papermill==2.7.0
-paramiko==3.5.1
+paramiko==4.0.0
 parso==0.8.7
 pathable==0.6.0
 pathlib_abc==0.5.2
@@ -723,7 +725,7 @@ types-certifi==2021.10.8.3
 types-cffi==2.0.0.20260518
 types-croniter==6.2.3.20260704
 types-docutils==0.22.3.20260518
-types-paramiko==3.5.0.20250801
+types-paramiko==4.0.0.20260518
 types-protobuf==7.34.1.20260518
 types-pyOpenSSL==24.1.0.20240722
 types-python-dateutil==2.9.0.20260518
