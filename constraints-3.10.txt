@@ -1,6 +1,6 @@
 
 #
-# This constraints file was automatically generated on 2026-07-16T14:49:48.994722
+# This constraints file was automatically generated on 2026-07-17T07:53:18.897974
 # via `uv pip install --resolution highest` for the "main" branch of Airflow.
 # This variant of constraints install uses the HEAD of the branch version for 'apache-airflow' but installs
 # the providers from PIP-released packages at the moment of the constraint generation.
@@ -76,7 +76,7 @@ aioitertools==0.13.0
 aiomysql==0.3.2
 aiosignal==1.4.0
 aiosmtplib==5.1.2
-aiosqlite==0.21.0
+aiosqlite==0.22.1
 airbyte-api==1.0.1
 akeyless==5.0.28
 alembic==1.18.5
@@ -95,7 +95,7 @@ amqp==5.3.1
 annotated-doc==0.0.4
 annotated-types==0.7.0
 anthropic==0.116.0
-anyio==4.14.1
+anyio==4.14.2
 apache-airflow-providers-apache-iceberg==1.4.1
 apache-airflow-providers-apache-tinkerpop==1.0.2
 apache-airflow-providers-google==22.1.0
