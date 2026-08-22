@@ -1,6 +1,6 @@
 
 #
-# This constraints file was automatically generated on 2026-08-20T09:10:34.929348
+# This constraints file was automatically generated on 2026-08-22T14:39:37.418033
 # via `uv pip install --resolution highest` for the "main" branch of Airflow.
 # This variant of constraints install uses the HEAD of the branch version for 'apache-airflow' but installs
 # the providers from PIP-released packages at the moment of the constraint generation.
@@ -54,7 +54,7 @@ PyJWT==2.13.0
 PyMySQL==1.1.3
 PyNaCl==1.6.2
 PyYAML==6.0.3
-Pygments==2.20.0
+Pygments==2.21.0
 SQLAlchemy-Utils==0.42.1
 SQLAlchemy==2.0.52
 SecretStorage==3.5.0
@@ -80,17 +80,14 @@ aiosqlite==0.22.1
 airbyte-api==1.0.1
 akeyless==5.0.28
 alembic==1.19.1
-alibabacloud-adb20211201==3.7.0
+alibabacloud-adb20211201==4.1.1
 alibabacloud-credentials-api==1.0.1
-alibabacloud-credentials==1.0.11
+alibabacloud-credentials==1.0.12
 alibabacloud-gateway-spi==0.0.4
-alibabacloud-openapi-util==0.2.4
 alibabacloud-oss-v2==1.3.2
+alibabacloud-tea-openapi==0.4.6
 alibabacloud-tea-util==0.3.15
 alibabacloud-tea==0.4.3
-alibabacloud_endpoint_util==0.0.4
-alibabacloud_tea_openapi==0.3.16
-alibabacloud_tea_xml==0.0.3
 amqp==5.3.1
 annotated-doc==0.0.5
 annotated-types==0.8.0
@@ -137,7 +134,7 @@ async-timeout==4.0.3
 asyncpg==0.31.0
 asyncssh==2.24.0
 atlasclient==1.0.0
-atlassian-python-api==5.0.1
+atlassian-python-api==5.0.3
 attrs==26.1.0
 azure-ai-projects==2.4.0
 azure-batch==14.2.0
@@ -210,6 +207,7 @@ cron_descriptor==2.1.0
 croniter==6.2.4
 cryptography==50.0.0
 curlify==3.0.0
+darabonba-core==1.0.8
 databricks-sql-connector==4.4.0
 datadog==0.53.0
 db-dtypes==1.7.1
@@ -315,7 +313,7 @@ graphviz==0.21
 greenback==1.3.0
 greenlet==3.5.5
 gremlinpython==3.8.1
-griffelib==2.1.0
+griffelib==2.2.0
 grpc-google-iam-v1==0.14.5
 grpc-interceptor==0.15.4
 grpcio-gcp==0.2.2
@@ -324,27 +322,27 @@ grpcio-status==1.83.0
 grpcio-tools==1.81.1
 grpcio==1.83.0
 gssapi==1.11.1
-gunicorn==26.0.0
+gunicorn==26.1.0
 h11==0.16.0
 h2==4.4.1
 hdfs==2.7.3
 hf-xet==1.6.0
 hmsclient==0.1.1
 hpack==4.2.0
-httpcore2==2.10.0
+httpcore2==2.12.0
 httpcore==1.0.9
 httplib2==0.32.0
 httpr==0.6.0
 httptools==0.8.0
-httpx2==2.10.0
+httpx2==2.12.0
 httpx==0.28.1
-huggingface_hub==1.27.0
+huggingface_hub==1.28.0
 humanize==4.16.0
 hvac==2.4.0
 hyperframe==6.1.0
 ibm-cloud-sdk-core==3.26.0
 ibmcloudant==0.11.10
-idna==3.18
+idna==3.19
 ijson==3.4.0.post0
 immutabledict==4.3.1
 importlib_metadata==8.9.0
@@ -425,7 +423,7 @@ mysqlclient==2.2.8
 natsort==8.4.0
 nbclient==0.11.0
 nbconvert==7.17.1
-nbformat==5.11.0
+nbformat==5.11.1
 neo4j==6.2.0
 nest-asyncio2==1.7.2
 nest-asyncio==1.6.0
@@ -499,9 +497,9 @@ pybreaker==1.4.1
 pycountry==26.2.16
 pycparser==3.0
 pycryptodome==3.23.0
-pydantic-ai-slim==2.31.0
+pydantic-ai-slim==2.31.1
 pydantic-extra-types==2.11.1
-pydantic-graph==2.31.0
+pydantic-graph==2.31.1
 pydantic-settings==2.15.0
 pydantic==2.13.4
 pydantic_core==2.46.4
@@ -524,7 +522,7 @@ python-arango==8.3.3
 python-daemon==3.1.2
 python-dateutil==2.9.0.post0
 python-discovery==1.5.2
-python-dotenv==1.2.2
+python-dotenv==1.2.3
 python-http-client==3.3.7
 python-jenkins==1.8.3
 python-keycloak==7.1.1
@@ -606,7 +604,7 @@ textual==8.2.8
 threadpoolctl==3.6.0
 thrift-sasl==0.4.3
 thrift==0.24.0
-tiktoken==0.13.0
+tiktoken==0.14.0
 tinycss2==1.5.1
 tokenizers==0.23.1
 tomli==2.4.1
