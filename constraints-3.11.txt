@@ -1,6 +1,6 @@
 
 #
-# This constraints file was automatically generated on 2026-09-09T08:49:58.185919
+# This constraints file was automatically generated on 2026-09-11T06:40:35.848822
 # via `uv pip install --resolution highest` for the "main" branch of Airflow.
 # This variant of constraints install uses the HEAD of the branch version for 'apache-airflow' but installs
 # the providers from PIP-released packages at the moment of the constraint generation.
@@ -41,7 +41,7 @@ Flask-SQLAlchemy==3.1.1
 Flask-Session==0.8.0
 Flask-WTF==1.3.0
 Flask==3.1.3
-GitPython==3.1.61
+GitPython==3.1.62
 JayDeBeApi==1.2.3
 Jinja2==3.1.6
 Mako==1.4.1
@@ -92,7 +92,45 @@ amqp==5.3.1
 annotated-doc==0.0.5
 annotated-types==0.8.0
 anthropic==1.4.0
-anyio==4.15.0
+anyio==4.15.1
+apache-airflow-providers-akeyless==0.3.0
+apache-airflow-providers-amazon==9.35.1
+apache-airflow-providers-anthropic==0.3.0
+apache-airflow-providers-apache-beam==6.2.3
+apache-airflow-providers-apache-hive==9.6.1
+apache-airflow-providers-apache-iceberg==2.1.0
+apache-airflow-providers-apache-kafka==1.16.0
+apache-airflow-providers-celery==3.23.1
+apache-airflow-providers-cncf-kubernetes==10.21.1
+apache-airflow-providers-cohere==1.6.7
+apache-airflow-providers-common-ai==0.8.0
+apache-airflow-providers-common-compat==1.18.0
+apache-airflow-providers-common-io==1.8.0
+apache-airflow-providers-common-messaging==2.0.4
+apache-airflow-providers-databricks==7.19.0
+apache-airflow-providers-edge3==4.3.1
+apache-airflow-providers-elasticsearch==6.9.0
+apache-airflow-providers-exasol==4.10.5
+apache-airflow-providers-fab==3.8.1
+apache-airflow-providers-git==0.4.3
+apache-airflow-providers-google==22.4.0
+apache-airflow-providers-http==6.0.5
+apache-airflow-providers-influxdb==2.11.0
+apache-airflow-providers-informatica==0.2.0
+apache-airflow-providers-jdbc==5.5.1
+apache-airflow-providers-keycloak==0.9.0
+apache-airflow-providers-microsoft-azure==15.0.1
+apache-airflow-providers-odbc==4.12.3
+apache-airflow-providers-opensearch==1.12.0
+apache-airflow-providers-pagerduty==5.2.6
+apache-airflow-providers-redis==4.5.0
+apache-airflow-providers-smtp==3.0.3
+apache-airflow-providers-snowflake==6.16.1
+apache-airflow-providers-standard==1.18.0
+apache-airflow-providers-teradata==3.6.2
+apache-airflow-providers-yandex==4.5.1
+apache-airflow-providers-ydb==2.5.3
+apache-beam==2.76.0
 apispec==6.10.0
 apprise==1.13.1
 argcomplete==3.7.2
@@ -139,6 +177,7 @@ backoff==2.2.1
 backports.tarfile==1.2.0
 backports.zstd==1.7.0
 bcrypt==5.0.0
+beartype==0.22.9
 beautifulsoup4==4.15.0
 billiard==4.2.4
 bitarray==3.11.0
@@ -152,7 +191,7 @@ cachetools==7.1.8
 cadwyn==7.0.0
 capi_param_builder_python==1.3.0
 cassandra-driver==3.30.1
-cattrs==26.1.0
+cattrs==26.2.0
 celery==5.6.3
 certifi==2026.7.22
 cffi==2.1.1
@@ -174,7 +213,7 @@ confluent-kafka==2.15.0
 crcmod-plus==2.3.1
 cron_descriptor==2.1.0
 croniter==6.2.4
-cryptography==50.0.1
+cryptography==48.0.1
 curlify==3.0.0
 darabonba-core==1.0.9
 databricks-sql-connector==4.5.0
@@ -203,7 +242,8 @@ facebook_business==26.0.1
 fastapi-cli==0.0.32
 fastapi==0.136.3
 fastavro==1.12.2
-fastcore==2.2.21
+fastcore==2.2.22
+fasteners==0.20
 fastjsonschema==2.22.2
 fastuuid==0.14.0
 filelock==3.32.5
@@ -337,12 +377,13 @@ joblib==1.6.0
 joserfc==1.7.5
 jpype1==1.7.1
 jsonpath-ng==1.8.0
+jsonpickle==4.1.2
 jsonschema-specifications==2025.9.1
 jsonschema==4.26.0
 jupyter_client==8.10.0
 jupyter_core==5.9.1
 jupyterlab_pygments==0.3.0
-jwcrypto==1.6.0
+jwcrypto==1.5.8
 keyring==25.7.0
 kombu==5.6.2
 krb5==0.10.0
@@ -399,6 +440,7 @@ nest-asyncio2==1.7.2
 nest-asyncio==1.6.0
 numpy==2.4.6
 oauthlib==3.3.1
+objsize==0.7.1
 openai==2.54.0
 opencensus-context==0.1.3
 opencensus==0.11.4
@@ -437,6 +479,7 @@ pbr==7.0.3
 pendulum==3.2.0
 pexpect==4.9.0
 pgvector==0.5.0
+pillow==12.3.0
 pinecone==10.0.0
 pinotdb==9.1.2
 platformdirs==4.11.7
@@ -459,7 +502,7 @@ ptyprocess==0.7.0
 pure-sasl==0.6.2
 pure_eval==0.2.3
 py-spy==0.4.2
-pyOpenSSL==26.4.0
+pyOpenSSL==26.2.0
 pyarrow==25.0.1
 pyasn1==0.6.4
 pyasn1_modules==0.4.2
@@ -475,7 +518,7 @@ pydantic==2.13.5
 pydantic_core==2.46.5
 pydata-google-auth==1.9.1
 pydruid==0.6.9
-pyexasol==2.3.2
+pyexasol==1.3.0
 pygtrie==2.6.1
 pyiceberg==0.12.0
 pykerberos==1.2.4
@@ -503,7 +546,7 @@ python-telegram-bot==22.8
 python3-saml==1.16.0
 pytokens==0.4.1
 pytz==2026.3.post1
-pyvespa==1.2.5
+pyvespa==1.2.4
 pywinrm==0.5.0
 pyzmq==27.2.0
 qdrant-client==1.19.0
@@ -584,8 +627,8 @@ traitlets==5.16.1
 trino==0.339.0
 truststore==0.10.4
 typer==0.27.2
-types-protobuf==7.35.1.20260827
-types-requests==2.33.0.20260712
+types-protobuf==7.35.1.20260906
+types-requests==2.33.0.20260906
 typing-inspection==0.4.4
 typing_extensions==4.16.0
 tzdata==2026.3
@@ -606,7 +649,7 @@ watchtower==3.4.0
 wcwidth==0.8.3
 weaviate-client==4.16.2
 webencodings==0.6.1
-websocket-client==1.9.2
+websocket-client==1.8.0
 websockets==16.1.1
 wirerope==1.0.0
 wrapt==2.4.0
